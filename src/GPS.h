@@ -112,7 +112,6 @@ private:
 		float geoSep;		/* Geoidal Separation */
 		char geoSepUnit;
 
-
 		/* Not used */
 		float ageDiffCorre;
 		float diffRefStationId;

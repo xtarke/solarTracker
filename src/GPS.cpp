@@ -82,8 +82,6 @@ void GPS::parseStringData(){
 #ifdef DEBUG
 		std::cout << "\nLongitute degrees: " << numericalGpsData.longitute << std::endl;
 #endif
-
-
 		numericalGpsData.meridian = dataParts[5][0];
 		numericalGpsData.posFix = std::stoi(dataParts[6]);
 
