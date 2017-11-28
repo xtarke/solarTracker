@@ -12,14 +12,15 @@
 #include <iostream>
 
 #include "SolarTracker.h"
+#include "PRU.h"
 
 using namespace std;
 
 
 int main() {
 
-	SolarTracker solarTracaker("/dev/ttyUSB0");
-
+	// SolarTracker solarTracaker("/dev/ttyUSB0");
+	PRU hardware;
 
 
 	return 0;
