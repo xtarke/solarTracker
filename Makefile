@@ -1,8 +1,8 @@
-CXX = g++
-CC = gcc
-CFLAGS = -Wall -c -O0
-CXXFLAGS = -c -Wall -O0
-LDFLASG = -lm -pthread -lprussdrv
+CXX = arm-linux-gnueabi-g++
+CC = arm-linux-gnueabi-gcc
+CFLAGS = -Wall -c -O3 -I ../am335x_pru_package/pru_sw/app_loader/include
+CXXFLAGS = -c -Wall -O3  -I ../am335x_pru_package/pru_sw/app_loader/include
+LDFLASG = -L ../am335x_pru_package/pru_sw/app_loader/lib/  -lm -pthread -lprussdrv 
 
 
 CSOURCES=./src/spa/spa.c

@@ -10,6 +10,8 @@
 //============================================================================
 
 #include <iostream>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include "SolarTracker.h"
 #include "PRU.h"
@@ -19,8 +21,21 @@ using namespace std;
 
 int main() {
 
+
+	if (getuid() != 0){
+		printf("You must run this program as root. Exiting.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	// SolarTracker solarTracaker("/dev/ttyUSB0");
 	PRU hardware;
+
+	hardware.testRun(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 200);
+	sleep(1);
+	hardware.testRun(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 100);
+	sleep(1);
+	hardware.testRun(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 500);
+	sleep(1);
 
 
 	return 0;
