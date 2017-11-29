@@ -16,6 +16,11 @@
 #define nr_rept_1msL	0x8740		// 1ms/(5ns*2), 5ns por instrucao e duas por laco de repeticao (parte baixa)
 #define nr_rept_1msH    0x1         // Aproximadamente 1.000.000 (parte alta): constantes máximas de 16-bits para o montador
 
+#define PULSE_PIN_Z r30.t5
+#define PULSE_PIN_A r31.t3
+#define CLOCKWISE_PIN_Z r31.t1
+#define CLOCKWISE_PIN_A r30.t2
+
 //------------------------------------------------------------------
 INICIO:
 	// Enable the OCP master port -- allows transfer of data to Linux userspace
@@ -24,8 +29,11 @@ INICIO:
     sbco    r0, C4, 4, 4   // store the modified r0 back at the load addr
 
 	mov   r5, 0x0           // load SRAM init address (0x0000) to r5
-	lbbo  r1, r5, 0, 4      // load to r1 the number of pulses that is passed throgh PRU SRAM from Linux
+    lbbo  r1, r5, 0, 4      // load to r1 the servo ID (0 -> ZENITH_SERVO, 1 -> AZIMUTH_SERVO)
+    lbbo  r2, r5, 4, 4      // load to r2 the moviment (0-> CLOCKWISE, 1 -> COUNTERCLOCKWISE)
+    lbbo  r3, r5, 8, 4      // load to r3 the number of pulses
     
+
 	//ldi	r1, 500
 	//--------------------------------------------------------------
 	GERA_PULSOS:
@@ -42,6 +50,7 @@ FIM:
 //------------------------------------------------------------------
 //------------------------------------------------------------------
 DELAY_1ms:
+    mov r5, 1000160    
 	ldi r0, nr_rept_1msL
 	ldi r2, nr_rept_1msH
 	lsl r2, r2, 16

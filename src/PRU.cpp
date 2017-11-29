@@ -65,7 +65,7 @@ void PRU::testRun(enum servoID servo, enum direction dir, uint32_t pulses){
 	uint32_t prusData[3];
 
 	//prusData[0] = servo;
-	prusData[2] = pulses;
+	prusData[0] = pulses;
 	prusData[1] = dir;
 	prusData[2] = pulses;
 
@@ -78,6 +78,8 @@ void PRU::testRun(enum servoID servo, enum direction dir, uint32_t pulses){
 	// Wait for event completion from PRU, returns the PRU_EVTOUT_0 number
 	int n = prussdrv_pru_wait_event (PRU_EVTOUT_0);
 	printf("EBB PRU program completed, event number %d.\n", n);
+
+	prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 
 }
 
