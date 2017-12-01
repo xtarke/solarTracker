@@ -30,7 +30,7 @@ int main() {
 	// SolarTracker solarTracaker("/dev/ttyUSB0");
 	PRU hardware;
 
-	hardware.testRun(PRU::ZENITH_SERVO, PRU::CLOCKWISE, 2);
+	hardware.testRun(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 2);
 	usleep(10);
 	hardware.testRun(PRU::ZENITH_SERVO, PRU::CLOCKWISE, 10);
 	sleep(1);

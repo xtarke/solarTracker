@@ -8,10 +8,10 @@
 #define nr_rept_1msL	0x8740		// 1ms/(5ns*2), 5ns por instrucao e duas por laco de repeticao (parte baixa)
 #define nr_rept_1msH    0x1         // Aproximadamente 1.000.000 (parte alta): constantes máximas de 16-bits para o montador
 
-#define PULSE_PIN_Z		r30.t5
-#define PULSE_PIN_A		r31.t3
-#define CLOCKWISE_PIN_Z r31.t1
-#define CLOCKWISE_PIN_A r30.t2
+#define PULSE_PIN_A		r30.t5      // BB_pin P9.27
+#define PULSE_PIN_Z		r30.t3      // BB_pin P9.28
+#define CLOCKWISE_PIN_A r30.t1      // BB_pin P9.30
+#define CLOCKWISE_PIN_Z r30.t2      // BB_pin P9.31
 
 //------------------------------------------------------------------
 Inicio:

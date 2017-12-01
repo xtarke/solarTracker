@@ -19,6 +19,15 @@ private:
 	void *pru0DataMemory;
 	unsigned int *pru0DataMemory_int;
 
+	struct PRUMessage {
+		uint32_t servoId;			/* 	(0 -> ZENITH_SERVO, 1 -> AZIMUTH_SERVO)      */
+		uint32_t zenithDirection;	/*  (0-> CLOCKWISE_Z,   1 -> COUNTERCLOCKWISE_Z) */
+		uint32_t azimuthDirection;  /*	(0-> CLOCKWISE_A,   1 -> COUNTERCLOCKWISE_A) */
+		uint32_t zenithPulses;		/*  number of pulses Z  */
+		uint32_t azimuthPulses;		/*  number of pulses A  */
+	};
+
+
 public:
 	PRU();
 	virtual ~PRU();
