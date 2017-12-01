@@ -62,12 +62,13 @@ PRU::~PRU() {
 
 void PRU::testRun(enum servoID servo, enum direction dir, uint32_t pulses){
 
-	uint32_t prusData[3];
+	uint32_t prusData[5];
 
-	//prusData[0] = servo;
-	prusData[0] = pulses;
-	prusData[1] = dir;
-	prusData[2] = pulses;
+	prusData[0] = servo;		/* 	(0 -> ZENITH_SERVO, 1 -> AZIMUTH_SERVO)      */
+	prusData[1] = dir;		    /*  (0-> CLOCKWISE_Z,   1 -> COUNTERCLOCKWISE_Z) */
+	prusData[2] = dir;		    /*	(0-> CLOCKWISE_A,   1 -> COUNTERCLOCKWISE_A) */
+	prusData[3] = pulses;       /*  number of pulses Z  */
+	prusData[4] = pulses;       /*  number of pulses A  */
 
 	/* Pass Servo moviment do PRU */
 	prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, prusData, sizeof(prusData));

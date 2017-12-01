@@ -1,0 +1,41 @@
+as root:
+
+cat /sys/kernel/debug/pinctrl/44e10800.pinmux/pins | grep '103\|105' 
+
+
+Debian 9.2:
+Linux beaglebone 4.4.91-ti-r133 #1 SMP Tue Oct 10 05:18:08 UTC 2017 armv7l GNU/Linux
+
+----------------------------
+
+Arch:
+Linux alarm 4.8.12-1-ARCH #1 Sat Dec 3 19:48:05 MST 2016 armv7l GNU/Linux
+
+Pins after enable-pru:
+pin 103 (44e1099c.0) 00000026 pinctrl-single 
+pin 105 (44e109a4.0) 00000005 pinctrl-single 
+
+
+dtc:
+Version: DTC 1.4.1
+
+modules:
+uio_pruss               5106  0
+omap_aes               12896  0
+crypto_engine           3843  1 omap_aes
+omap_sham              21812  0
+tilcdc                 26095  0
+omap_rng                4572  0
+rng_core                7001  1 omap_rng
+omap_wdt                4191  0
+evdev                   9843  1
+tda998x                10353  0
+sch_fq_codel            7437  3
+usb_f_ecm               9635  1
+g_ether                 4791  0
+usb_f_rndis            21711  2 g_ether
+u_ether                 9778  3 usb_f_ecm,g_ether,usb_f_rndis
+libcomposite           40910  3 usb_f_ecm,g_ether,usb_f_rndis
+ip_tables               9921  0
+x_tables               15954  1 ip_tables
+

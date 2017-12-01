@@ -1,4 +1,4 @@
-setcallreg r10.w0  // configura registrador para salvamento do endereço de retorno
+.setcallreg r10.w0  // configura registrador para salvamento do endereço de retorno
 .origin 0			// inicio do programa na memória PRU
 .entrypoint Inicio	// entrada de programa para o depurador
 

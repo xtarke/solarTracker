@@ -1,5 +1,6 @@
 #!/bin/sh
 
+scp ./solarTracker  alarm@192.168.7.2:/home/alarm/solar/
 scp ./src/*.cpp alarm@192.168.7.2:/home/alarm/solar/src/
 scp ./src/*.h alarm@192.168.7.2:/home/alarm/solar/src/
 scp ./src/spa/*.h alarm@192.168.7.2:/home/alarm/solar/src/spa/

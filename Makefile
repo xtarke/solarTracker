@@ -1,5 +1,5 @@
-CXX = arm-linux-gnueabi-g++
-CC = arm-linux-gnueabi-gcc
+CXX = arm-linux-gnueabihf-g++
+CC = arm-linux-gnueabihf-gcc
 CFLAGS = -Wall -c -O3 -I ../am335x_pru_package/pru_sw/app_loader/include
 CXXFLAGS = -c -Wall -O3  -I ../am335x_pru_package/pru_sw/app_loader/include
 LDFLASG = -L ../am335x_pru_package/pru_sw/app_loader/lib/  -lm -pthread -lprussdrv 
