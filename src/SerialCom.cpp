@@ -23,7 +23,7 @@ SerialCom::SerialCom(const char* devFilename) {
 	/* Try to open GPS device */
 	fd = open(devFilename, O_RDWR | O_NOCTTY );
 
-	if (fd <0) {perror(devFilename); exit(-1); }
+	if (fd < 0) {perror(devFilename); exit(-1); }
 
 	tcgetattr(fd,&oldtio); /* save current serial port settings */
 	bzero(&newtio, sizeof(newtio)); /* clear struct for new port settings */

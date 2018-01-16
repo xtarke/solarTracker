@@ -6,6 +6,7 @@
  */
 
 #include "SolarTracker.h"
+#include "GPS.h"
 
 /* Azimuth is measured from the north point (sometimes from the south point)
  *  of the horizon around to the east; altitude is the angle above the horizon.*/
@@ -13,11 +14,14 @@
 
 void SolarTracker::GPSComThreadFunction(){
 	//while (1)
+	int ret;
 
 	for (int i=0; i < 10; i++){
-		serialGPS->ReadandParse();
+		ret = serialGPS->ReadandParse();
 		//serialGPS->printNumericalData();
-		SPACalculationThreadFunction();
+
+		if (ret == 0)
+			SPACalculationThreadFunction();
 
 		std::cout << "-------------------------\n";
 	}

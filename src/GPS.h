@@ -21,14 +21,12 @@ extern "C" {
 	#include "spa/spa.h"
 }
 
-
-
 class GPS {
 public:
 	GPS(const char* devFilename);
 	virtual ~GPS();
 
-	void ReadandParse();
+	int ReadandParse();
 	void printNumericalData();
 
 	uint8_t get_hh() {return numericalGpsData.hh;}
@@ -43,7 +41,12 @@ public:
 
 	float get_altitude() {return numericalGpsData.mslAltitue;}
 
-
+	// all failure return codes must be negative
+	enum gps_return_code {
+		GPS_NOT_READY = -2,
+		GPS_FAILURE = -1,
+		GPS_SUCCESS = 0
+	};
 
 
 private:
@@ -54,7 +57,7 @@ private:
 	std::string gpsData;
 
 	/* Parser functions */
-	void parseStringData();
+	int parseStringData();
 
 	struct split {
 		enum empties_t { empties_ok, no_empties };

@@ -7,16 +7,20 @@
 
 #include "GPS.h"
 
-#define DEBUG
+// #define DEBUG
 
-void GPS::ReadandParse(){
+int GPS::ReadandParse(){
+	int ret;
+
 	gpsCom->readData(gpsData);
-	parseStringData();
+	ret = parseStringData();
 	gpsData.clear();
+
+	return ret;
 }
 
 
-void GPS::parseStringData(){
+int GPS::parseStringData(){
 
 	std::vector<std::string> dataParts;
 	std::string::size_type frameInit, frameSize;
@@ -39,17 +43,34 @@ void GPS::parseStringData(){
 #endif
 
 		/* Convert data to numerical data */
-		numericalGpsData.hh = std::stoi(dataParts[1].substr(0,2));
-		numericalGpsData.mm = std::stoi(dataParts[1].substr(2,2));
-		numericalGpsData.ss = std::stoi(dataParts[1].substr(4,2));
+
+		try {
+			numericalGpsData.hh = std::stoi(dataParts[1].substr(0,2));
+			numericalGpsData.mm = std::stoi(dataParts[1].substr(2,2));
+			numericalGpsData.ss = std::stoi(dataParts[1].substr(4,2));
+		}
+		catch(const std::exception& e){
+			std::cerr << "Gps not yet Ready\n";
+			return GPS_NOT_READY;
+		}
 
 		/* Latitude is:  ddmm.mmmm
 		 * SPA needs fraction degress:
 		 * Decimal Degrees = degrees + (minutes/60) + (seconds/3600)
 		 */
-		float degress = std::stof(dataParts[2].substr(0,2));
-		float minutes = std::stof(dataParts[2].substr(2,2));
-		float fracMinutes = std::stof(dataParts[2].substr(4,3));
+		float degress;
+		float minutes;
+		float fracMinutes;
+
+		try{
+			degress = std::stof(dataParts[2].substr(0,2));
+			minutes = std::stof(dataParts[2].substr(2,2));
+			fracMinutes = std::stof(dataParts[2].substr(4,3));
+		} catch(const std::exception& e){
+			std::cerr << "Gps not yet Ready\n";
+			return GPS_NOT_READY;
+		}
+
 
 
 #ifdef DEBUG
@@ -69,9 +90,14 @@ void GPS::parseStringData(){
 		 * Decimal Degrees = degrees + (minutes/60) + (seconds/3600)
 		 */
 
-		degress = std::stof(dataParts[4].substr(0,3));
-		minutes = std::stof(dataParts[4].substr(3,2));
-		fracMinutes = std::stof(dataParts[4].substr(5,3));
+		try {
+			degress = std::stof(dataParts[4].substr(0,3));
+			minutes = std::stof(dataParts[4].substr(3,2));
+			fracMinutes = std::stof(dataParts[4].substr(5,3));
+		}catch(const std::exception& e){
+			std::cerr << "Gps not yet Ready\n";
+			return GPS_NOT_READY;
+		}
 
 #ifdef DEBUG
 		std::cout << "\tFLongitude degrees: " << degress << " " << minutes << "  " << fracMinutes << std::endl;
@@ -82,19 +108,28 @@ void GPS::parseStringData(){
 #ifdef DEBUG
 		std::cout << "\nLongitute degrees: " << numericalGpsData.longitute << std::endl;
 #endif
-		numericalGpsData.meridian = dataParts[5][0];
-		numericalGpsData.posFix = std::stoi(dataParts[6]);
 
-		numericalGpsData.satellites = std::stoi(dataParts[7]);
-		numericalGpsData.hdop = std::stof(dataParts[8]);
+		try {
+			numericalGpsData.meridian = dataParts[5][0];
+			numericalGpsData.posFix = std::stoi(dataParts[6]);
 
-		numericalGpsData.mslAltitue = std::stof(dataParts[9]);
-		numericalGpsData.altitudeUnit = dataParts[10][0];
+			numericalGpsData.satellites = std::stoi(dataParts[7]);
+			numericalGpsData.hdop = std::stof(dataParts[8]);
 
-		numericalGpsData.geoSep = std::stof(dataParts[11]);
-		numericalGpsData.geoSepUnit = dataParts[12][0];
+			numericalGpsData.mslAltitue = std::stof(dataParts[9]);
+			numericalGpsData.altitudeUnit = dataParts[10][0];
 
+			numericalGpsData.geoSep = std::stof(dataParts[11]);
+			numericalGpsData.geoSepUnit = dataParts[12][0];
+		}catch(const std::exception& e){
+			std::cerr << "Gps not yet Ready\n";
+			return GPS_NOT_READY;
+		}
 	}
+	else
+		return GPS_FAILURE;
+
+	return GPS_SUCCESS;
 }
 
 void GPS::printNumericalData()
