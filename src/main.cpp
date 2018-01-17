@@ -16,6 +16,8 @@
 #include "SolarTracker.h"
 #include "PRU.h"
 
+#include "Magnetometer.h"
+
 using namespace std;
 
 
@@ -26,6 +28,15 @@ int main() {
 		printf("You must run this program as root. Exiting.\n");
 		exit(EXIT_FAILURE);
 	}
+
+//	Magnetometer bussula;
+//
+//
+//	for (int i=0; i < 50; i++){
+//		bussula.refresh();
+//		sleep(1);
+//	}
+
 
 	SolarTracker solarTracaker("/dev/ttyS1");
 	//PRU hardware;

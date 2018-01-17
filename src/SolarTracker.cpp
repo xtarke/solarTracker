@@ -14,9 +14,9 @@
 
 void SolarTracker::GPSComThreadFunction(){
 	//while (1)
-	int ret;
+	int ret, localCmd = SOLAR_RUNNING;
 
-	for (int i=0; i < 10; i++){
+	while (localCmd == SOLAR_RUNNING){
 		ret = serialGPS->ReadandParse();
 		//serialGPS->printNumericalData();
 
@@ -24,8 +24,37 @@ void SolarTracker::GPSComThreadFunction(){
 			SPACalculationThreadFunction();
 
 		std::cout << "-------------------------\n";
+
+		/* Read exit command */
+		inputOutputMutex.lock();
+		localCmd = cmd;
+		inputOutputMutex.unlock();
 	}
 }
+
+void SolarTracker::inputOutputFunction(){
+
+	int localCmd = SOLAR_RUNNING;
+	std::string trash;
+
+	do {
+		std::cout << "Comando: (> 0 para sair)\n";
+		std::cin >> trash;
+
+		try {
+			localCmd = std::stoi(trash);
+		}catch(const std::exception& e){
+			std::cerr << "Invalid input data\n";
+			localCmd = 0;
+		}
+	} while (localCmd == SOLAR_RUNNING);
+
+	/* Test exit command */
+	inputOutputMutex.lock();
+	cmd = localCmd;
+	inputOutputMutex.unlock();
+}
+
 
 void SolarTracker::SPACalculationThreadFunction(){
 
@@ -100,17 +129,19 @@ void SolarTracker::SPACalculationThreadFunction(){
 
 SolarTracker::SolarTracker(const char* GPSdevFilename) {
 
+	cmd = SOLAR_RUNNING;
 
 	serialGPS = new GPS(GPSdevFilename);
 
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
-
+	inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
 
 }
 
 SolarTracker::~SolarTracker() {
 
 	gpsComThread->join();
+	inputOutputThread->join();
 
 	delete serialGPS;
 

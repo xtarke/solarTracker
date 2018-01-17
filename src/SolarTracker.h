@@ -9,9 +9,10 @@
 #define SOLARTRACKER_H_
 
 #include "GPS.h"
-#include <thread>
-
 #include "spa/spa.h"
+
+#include <thread>
+#include <mutex>
 
 class SolarTracker {
 
@@ -24,6 +25,17 @@ private:
 	void GPSComThreadFunction();
 
 	void SPACalculationThreadFunction();
+
+	std::thread *inputOutputThread;
+	void inputOutputFunction();
+	std::mutex inputOutputMutex;
+	int cmd;
+
+	enum solar_cmds {
+		SOLAR_RUNNING = 0,
+		SOLAR_EXIT = 1
+	};
+
 
 	spa_data spa;
 

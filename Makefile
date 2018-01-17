@@ -1,13 +1,15 @@
 CXX = arm-linux-gnueabihf-g++
 CC = arm-linux-gnueabihf-gcc
-CFLAGS = -Wall -c -O3 -I ../am335x_pru_package/pru_sw/app_loader/include
-CXXFLAGS = -c -Wall -O3  -I ../am335x_pru_package/pru_sw/app_loader/include -I./src/
+CFLAGS = -Wall -c -g -O3 -I ../am335x_pru_package/pru_sw/app_loader/include
+CXXFLAGS = -c -Wall -g -O3  -I ../am335x_pru_package/pru_sw/app_loader/include -I./src/
 LDFLASG = -L ../am335x_pru_package/pru_sw/app_loader/lib/  -lm -pthread -lprussdrv 
 
 
 CSOURCES=./src/spa/spa.c
 
 CPPSOURCES= ./src/main.cpp \
+            ./src/i2cmodule.cpp \
+            ./src/Magnetometer.cpp \
             ./src/GPS.cpp \
             ./src/SerialCom.cpp \
             ./src/PRU.cpp \
