@@ -38,7 +38,7 @@ void SolarTracker::inputOutputFunction(){
 	std::string trash;
 
 	do {
-		std::cout << "Comando: (> 0 para sair)\n";
+		std::cout << "Command: (> 0 to exit)\n";
 		std::cin >> trash;
 
 		try {

@@ -18,6 +18,9 @@
 
 #include "Magnetometer.h"
 
+#include "MqttComm.h"
+
+#include "MqttComm.h"
 using namespace std;
 
 
@@ -25,20 +28,21 @@ int main() {
 
 
 	if (getuid() != 0){
-		printf("You must run this program as root. Exiting.\n");
-		exit(EXIT_FAILURE);
+		std::cout << "You must run this program as root. Exiting.\n";
+		//exit(EXIT_FAILURE);
 	}
 
+	MqttComm myComm("juca", "192.168.6.1", 1883);
+
 //	Magnetometer bussula;
-//
-//
+
 //	for (int i=0; i < 50; i++){
 //		bussula.refresh();
 //		sleep(1);
 //	}
 
 
-	SolarTracker solarTracaker("/dev/ttyS1");
+//	SolarTracker solarTracaker("/dev/ttyS1");
 	//PRU hardware;
 
 	//hardware.testRun(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 2);

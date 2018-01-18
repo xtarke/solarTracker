@@ -1,8 +1,8 @@
 CXX = arm-linux-gnueabihf-g++
 CC = arm-linux-gnueabihf-gcc
-CFLAGS = -Wall -c -g -O3 -I ../am335x_pru_package/pru_sw/app_loader/include
-CXXFLAGS = -c -Wall -g -O3  -I ../am335x_pru_package/pru_sw/app_loader/include -I./src/
-LDFLASG = -L ../am335x_pru_package/pru_sw/app_loader/lib/  -lm -pthread -lprussdrv 
+CFLAGS = -Wall -fPIC -c -g -O3 -I ../am335x_pru_package/pru_sw/app_loader/include
+CXXFLAGS = -fPIC -c -Wall -g -O3  -I ../am335x_pru_package/pru_sw/app_loader/include -I./src/ -I ../moslibs/
+LDFLASG = -L ../am335x_pru_package/pru_sw/app_loader/lib/ -lm -pthread -lprussdrv -lmosquitto -lmosquittopp 
 
 
 CSOURCES=./src/spa/spa.c
@@ -13,6 +13,7 @@ CPPSOURCES= ./src/main.cpp \
             ./src/GPS.cpp \
             ./src/SerialCom.cpp \
             ./src/PRU.cpp \
+            ./src/MqttComm.cpp \
             ./src/SolarTracker.cpp
 
 COBJECTS=$(CSOURCES:.c=.o)                              
