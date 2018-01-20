@@ -15,13 +15,36 @@
 void SolarTracker::GPSComThreadFunction(){
 	//while (1)
 	int ret, localCmd = SOLAR_RUNNING;
+	char buffer[32];
 
 	while (localCmd == SOLAR_RUNNING){
 		ret = serialGPS->ReadandParse();
 		//serialGPS->printNumericalData();
 
-		if (ret == 0)
+		if (ret == 0){
 			SPACalculationThreadFunction();
+			myComm->publish(NULL, "solar/gps/status", 7, "online",0 , false);
+
+			/* Publish azimuth */
+			std::snprintf(buffer, sizeof(buffer), "%g", spa.azimuth);
+			myComm->publish(NULL, "solar/az", sizeof(buffer), buffer, 0 , false);
+			/* Publish zenith */
+			std::snprintf(buffer, sizeof(buffer), "%g", spa.zenith);
+			myComm->publish(NULL, "solar/ze", sizeof(buffer), buffer, 0 , false);
+
+			/* Publish longitude */
+			std::snprintf(buffer, sizeof(buffer), "%g", spa.longitude);
+			myComm->publish(NULL, "solar/gps/lon", sizeof(buffer), buffer, 0 , false);
+			/* Publish latitute */
+			std::snprintf(buffer, sizeof(buffer), "%g", spa.latitude);
+			myComm->publish(NULL, "solar/gps/lat", sizeof(buffer), buffer, 0 , false);
+			/* Publish latitute */
+			std::snprintf(buffer, sizeof(buffer), "%g", spa.elevation);
+			myComm->publish(NULL, "solar/gps/ele", sizeof(buffer), buffer, 0 , false);
+
+		}
+		else
+			myComm->publish(NULL, "solar/gps/status", 8, "offline",0 , false);
 
 		std::cout << "-------------------------\n";
 
@@ -132,6 +155,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 	cmd = SOLAR_RUNNING;
 
 	serialGPS = new GPS(GPSdevFilename);
+	myComm = new MqttComm("soltTracker", "192.168.6.1", 1883);
 
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
 	inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
@@ -144,6 +168,7 @@ SolarTracker::~SolarTracker() {
 	inputOutputThread->join();
 
 	delete serialGPS;
+	delete myComm;
 
 }
 

@@ -35,9 +35,8 @@ void MqttComm::on_connect(int rc)
 {
 	std::cout << "Connected with code %d. \n";
 
-	if (rc == 0)
-	{
-		subscribe(NULL, "command/");
+	if (rc == 0) {
+		subscribe(NULL, "solar/cmd");
 	}
 }
 

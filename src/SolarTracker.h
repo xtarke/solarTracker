@@ -9,6 +9,8 @@
 #define SOLARTRACKER_H_
 
 #include "GPS.h"
+#include "MqttComm.h"
+
 #include "spa/spa.h"
 
 #include <thread>
@@ -19,6 +21,7 @@ class SolarTracker {
 private:
 
 	GPS *serialGPS;
+	MqttComm *myComm;
 
 	/* Threads */
 	std::thread *gpsComThread;

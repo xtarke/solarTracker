@@ -18,9 +18,7 @@
 
 #include "Magnetometer.h"
 
-#include "MqttComm.h"
 
-#include "MqttComm.h"
 using namespace std;
 
 
@@ -32,7 +30,7 @@ int main() {
 		//exit(EXIT_FAILURE);
 	}
 
-	MqttComm myComm("juca", "192.168.6.1", 1883);
+
 
 //	Magnetometer bussula;
 
@@ -42,7 +40,7 @@ int main() {
 //	}
 
 
-//	SolarTracker solarTracaker("/dev/ttyS1");
+	SolarTracker solarTracaker("/dev/ttyS1");
 	//PRU hardware;
 
 	//hardware.testRun(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 2);
