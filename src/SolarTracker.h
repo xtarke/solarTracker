@@ -27,7 +27,7 @@ private:
 	std::thread *gpsComThread;
 	void GPSComThreadFunction();
 
-	void SPACalculationThreadFunction();
+	void SPACalculationThreadFunction(int mode);
 
 	std::thread *inputOutputThread;
 	void inputOutputFunction();
@@ -39,8 +39,35 @@ private:
 		SOLAR_EXIT = 1
 	};
 
+	enum spa_mode{
+		GPS_ONLINE = 0,
+		LOCAL_PARAM = 1
+	};
+
+	double longitude;
+	double latitude;
+	double elevation;
 
 	spa_data spa;
+
+	void readLocConfFile();
+	int writeLocConfFile();
+
+	std::vector<std::string> split(const std::string& text, const std::string& delims)
+	{
+	    std::vector<std::string> tokens;
+	    std::size_t start = text.find_first_not_of(delims), end = 0;
+
+	    while((end = text.find_first_of(delims, start)) != std::string::npos)
+	    {
+	        tokens.push_back(text.substr(start, end - start));
+	        start = text.find_first_not_of(delims, end);
+	    }
+	    if(start != std::string::npos)
+	        tokens.push_back(text.substr(start));
+
+	    return tokens;
+	}
 
 public:
 	SolarTracker(const char* GPSdevFilename);

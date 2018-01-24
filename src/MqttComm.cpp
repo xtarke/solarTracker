@@ -11,6 +11,7 @@
 
 MqttComm::MqttComm(const char *id, const char *host, int port) {
 
+	int ret;
 	/* Initialize libmosquitto */
 	mosqpp::lib_init();
 
@@ -18,7 +19,11 @@ MqttComm::MqttComm(const char *id, const char *host, int port) {
 
 	/* Connection to the broker */
 	int keepalive = 120;
-	connect(host, port, keepalive);
+	ret = connect(host, port, keepalive);
+
+	if (ret != MOSQ_ERR_SUCCESS){
+		std::cerr << "Error connecting to mosquito broquer\n";
+	}
 
 	loop_start();
 
@@ -27,16 +32,19 @@ MqttComm::MqttComm(const char *id, const char *host, int port) {
 MqttComm::~MqttComm() {
 
 	/*  Kill the thread and clean up */
-	loop_stop();
+	// loop_stop();
 	mosqpp::lib_cleanup();
 }
 
 void MqttComm::on_connect(int rc)
 {
+	int ret;
 	std::cout << "Connected with code %d. \n";
 
 	if (rc == 0) {
-		subscribe(NULL, "solar/cmd");
+		ret = subscribe(NULL, "solar/cmd");
+
+		std::cout << "subscribe: " << ret << "\n";
 	}
 }
 
