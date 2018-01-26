@@ -13,6 +13,9 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <unistd.h>
+
+// #define DEBUG
 
 /* Azimuth is measured from the north point (sometimes from the south point)
  *  of the horizon around to the east; altitude is the angle above the horizon.*/
@@ -63,16 +66,19 @@ void SolarTracker::GPSComThreadFunction(){
 
 		/* Debug
 		 * publish each 5min*/
-
 		if (i % 300 == 0) {
 
-			std::string time = std::to_string(spa.hour) + ":" +  std::to_string(spa.minute) +
+			std::string time = std::to_string(spa.hour) + ":" +  std::to_string(spa.minute) + ":" +
 					std::to_string(spa.second);
 			stringValue = std::to_string(spa.azimuth) + "," + std::to_string(spa.zenith) + "," +
 					std::to_string(ret) + "," + time;
 			myComm->publish(NULL, "solar/debug", stringValue.length(), stringValue.c_str(), 0 , false);
 
 		}
+		/* Publish ret */
+		stringValue = std::to_string(ret);
+		myComm->publish(NULL, "solar/ret", stringValue.length(), stringValue.c_str(), 0 , false);
+
 		i++;
 
 		/* Read exit command */
@@ -82,6 +88,26 @@ void SolarTracker::GPSComThreadFunction(){
 
 		// std::cout << "local CMD: " << localCmd << std::endl;
 	}
+}
+
+void SolarTracker::MagComThreadFunction(){
+
+	int ret, localCmd = SOLAR_RUNNING;
+	int i = 0;
+
+	while (localCmd == SOLAR_RUNNING){
+
+		ret = magSensor->refresh();
+
+		/* Read exit command */
+		inputOutputMutex.lock();
+		localCmd = cmd;
+		inputOutputMutex.unlock();
+
+		sleep(1);
+	}
+
+
 }
 
 void SolarTracker::inputOutputFunction(){
@@ -110,9 +136,7 @@ void SolarTracker::inputOutputFunction(){
 
 
 void SolarTracker::SPACalculationThreadFunction(int mode){
-
 	int result;
-	float min, sec;
 
 	/* System Data */
 	time_t t = time(0);
@@ -186,13 +210,15 @@ void SolarTracker::SPACalculationThreadFunction(int mode){
 		printf("Incidence:     %.6f degrees\n",spa.incidence);
 #endif
 
+#ifdef DEBUG
+		float min, sec;
 		min = 60.0*(spa.sunrise - (int)(spa.sunrise));
 		sec = 60.0*(min - (int)min);
 
 		min = 60.0*(spa.sunset - (int)(spa.sunset));
 		sec = 60.0*(min - (int)min);
 
-#ifdef DEBUG
+
 		printf("Sunrise:       %02d:%02d:%02d Local Time\n", (int)(spa.sunrise), (int)min, (int)sec);
 		printf("Sunset:        %02d:%02d:%02d Local Time\n", (int)(spa.sunset), (int)min, (int)sec);
 #endif
@@ -209,6 +235,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 	cmd = SOLAR_RUNNING;
 
 	serialGPS = new GPS(GPSdevFilename);
+	magSensor = new Magnetometer();
 
 	/* Check existence of loc.conf */
 	std::ifstream confFileIn ("loc.conf");
@@ -229,12 +256,10 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 		readLocConfFile();
 
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
+	MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
 	inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
 
-	myComm = new MqttComm("soltTracker", "192.168.6.1", 1883);
-
-	gpsComThread->join();
-	inputOutputThread->join();
+	myComm = new MqttComm("soltTracker", "localhost", 1883);
 }
 
 int SolarTracker::writeLocConfFile(){
@@ -245,11 +270,11 @@ int SolarTracker::writeLocConfFile(){
 	if (confFileOut.is_open()){
 		confFileOut << std::fixed << std::setprecision(6);
 
-		longitude     = serialGPS->get_longitute();
 		latitude      = serialGPS->get_latitue();
+		longitude     = serialGPS->get_longitute();
 		elevation     = serialGPS->get_altitude();
 
-		confFileOut << longitude << ";" << latitude << ";" << elevation;
+		confFileOut << latitude << ";" << longitude << ";" << elevation;
 
 		confFileOut.close();
 
@@ -271,7 +296,7 @@ void SolarTracker::readLocConfFile(){
 		std::cerr << "Location file missing, it is strange... " << std::endl;
 	}
 
-	/* Fist line is the location: longitude;latitude;altitude */
+	/* Fist line is the location: latitude;longitude;altitude */
 	std::getline (confFileIn,line);
 
 	tokens = split(line,";");
@@ -280,8 +305,8 @@ void SolarTracker::readLocConfFile(){
 		std::cerr << "Location file is invalid, it is strange... " << std::endl;
 	}
 	else {
-		longitude = std::stof(tokens[0]);
-		latitude = std::stof(tokens[1]);
+		latitude = std::stof(tokens[0]);
+		longitude = std::stof(tokens[1]);
 		elevation = std::stof(tokens[2]);
 	}
 	confFileIn.close();
@@ -289,13 +314,21 @@ void SolarTracker::readLocConfFile(){
 
 
 SolarTracker::~SolarTracker() {
+	inputOutputThread->join();
+	gpsComThread->join();
+	MagComThread->join();
 
 	/* Write last known location */
 	writeLocConfFile();
 
 	myComm->disconnect();
 
+	delete inputOutputThread;
+	delete gpsComThread;
+	delete MagComThread;
+
 	delete serialGPS;
+	delete magSensor;
 	delete myComm;
 
 }

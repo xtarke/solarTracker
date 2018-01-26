@@ -9,6 +9,7 @@
 #define SOLARTRACKER_H_
 
 #include "GPS.h"
+#include "Magnetometer.h"
 #include "MqttComm.h"
 
 #include "spa/spa.h"
@@ -21,11 +22,15 @@ class SolarTracker {
 private:
 
 	GPS *serialGPS;
+	Magnetometer *magSensor;
 	MqttComm *myComm;
 
 	/* Threads */
 	std::thread *gpsComThread;
 	void GPSComThreadFunction();
+
+	std::thread *MagComThread;
+	void MagComThreadFunction();
 
 	void SPACalculationThreadFunction(int mode);
 

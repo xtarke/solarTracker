@@ -7,6 +7,7 @@
 
 #include "Magnetometer.h"
 #include <iostream>
+#include <math.h>
 
 Magnetometer::Magnetometer() {
 
@@ -41,6 +42,7 @@ Magnetometer::Magnetometer() {
 
 int Magnetometer::refresh(){
 
+	double angle;
 	uint8_t data[6] = {0,0,0,0,0,0};
 
 	if (status == MAG_SUCCESS){
@@ -51,18 +53,25 @@ int Magnetometer::refresh(){
 		/* Read axis */
 		i2cDev->readDev(data,6);
 
-//#ifdef DEBUG
+#ifdef DEBUG
 		for (int j=0; j < 6; j++)
 				printf("%d -> %x\n", j, data[j]);
-//#endif
+#endif
 
-		x = (data[0] << 8) | data[1];;
+		x = (data[0] << 8) | data[1];
 		y = (data[2] << 8) | data[3];
 		z = (data[4] << 8) | data[5];
 
+//#ifdef DEBUG
+		std::cout << "-------------" << std::endl;
 		printf("x= %d\n", x);
 		printf("y= %d\n", y);
 		printf("z= %d\n", z);
+//#endif
+		angle = atan2 (z,x) * 180 / M_PI;
+
+		std::cout << "Angle: " << angle << std::endl;
+
 	}
 
 	return MAG_SUCCESS;
