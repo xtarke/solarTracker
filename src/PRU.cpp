@@ -44,16 +44,15 @@ PRU::PRU() {
 	// Map PRU's interrupts
 	ret = prussdrv_pruintc_init(&pruss_intc_initdata);
 
-	std::cerr << "prussdrv_pruintc_init: " << ret << std::endl;;
-
+	if (ret < 0)
+		std::cerr << "prussdrv_pruintc_init: " << ret << std::endl;;
 
 	// MAP PRU local sram data
 	ret = prussdrv_map_prumem(PRUSS0_PRU0_DATARAM, &pru0DataMemory);
 	pru0DataMemory_int = (unsigned int *) pru0DataMemory;
 
-
-	std::cerr << "prussdrv_map_prumem: " << ret << std::endl;;
-
+	if (ret < 0)
+		std::cerr << "prussdrv_map_prumem: " << ret << std::endl;;
 
 }
 
@@ -64,7 +63,7 @@ PRU::~PRU() {
 }
 
 
-void PRU::testRun(enum servoID servo, enum direction dir, uint32_t pulses){
+void PRU::goPos(enum servoID servo, enum direction dir, uint32_t pulses){
 	int ret;
 	struct PRUMessage prusData;
 
@@ -77,16 +76,21 @@ void PRU::testRun(enum servoID servo, enum direction dir, uint32_t pulses){
 	/* Pass Servo moviment do PRU */
 	ret = prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, (const uint32_t *)&prusData, sizeof(prusData));
 
-	std::cerr << "prussdrv_pru_write_memory: " << ret << std::endl;;
+	if (ret < 0)
+		std::cerr << "prussdrv_pru_write_memory: " << ret << std::endl;;
 
 	// Load and execute the PRU program on the PRU
 	ret = prussdrv_exec_program (PRU_NUM, "./pulses.bin");
 
-	std::cerr << "prussdrv_exec_program: " << ret << std::endl;;
+	if (ret < 0)
+		std::cerr << "prussdrv_exec_program: " << ret << std::endl;;
 
 	// Wait for event completion from PRU, returns the PRU_EVTOUT_0 number
 	int n = prussdrv_pru_wait_event (PRU_EVTOUT_0);
+
+#ifdef DEBUG
 	printf("EBB PRU program completed, event number %d.\n", n);
+#endif
 
 	prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT);
 

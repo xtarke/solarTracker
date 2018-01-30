@@ -5,13 +5,17 @@
 #define PRU0_R31_VEC_VALID 32    // allows notification of program completion
 #define PRU_EVTOUT_0    3        // the event number that is sent back
 
-#define nr_rept_1msL	0x8740		// 1ms/(5ns*2), 5ns por instrucao e duas por laco de repeticao (parte baixa)
-#define nr_rept_1msH    0x1         // Aproximadamente 1.000.000 (parte alta): constantes máximas de 16-bits para o montador
+//#define nr_rept_1msL	0x8740		// 1ms/(5ns*2), 5ns por instrucao e duas por laco de repeticao (parte baixa)
+//#define nr_rept_1msH    0x1         // Aproximadamente 1.000.000 (parte alta): constantes máximas de 16-bits para o montador
+
+//Lego:
+#define nr_rept_1msL	0x3a00
+#define nr_rept_1msH    0xC
 
 #define PULSE_PIN_A		r30.t5      // BB_pin P9.27
 #define PULSE_PIN_Z		r30.t3      // BB_pin P9.28
-#define CLOCKWISE_PIN_A r30.t1      // BB_pin P9.30
-#define CLOCKWISE_PIN_Z r30.t2      // BB_pin P9.31
+#define CLOCKWISE_PIN_A r30.t1      // BB_pin P9.29
+#define CLOCKWISE_PIN_Z r30.t2      // BB_pin P9.30
 
 //------------------------------------------------------------------
 Inicio:
@@ -37,7 +41,7 @@ Inicio:
 	//--------------------------------------------------------------------------
 	Servo_A:
 			qbeq    Sent_Horario_A, r3, 0 
-			set		CLOCKWISE_PIN_A
+            set		CLOCKWISE_PIN_A            
 			qba		Gera_pulsos_A
 
 		Sent_Horario_A:		

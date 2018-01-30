@@ -26,6 +26,8 @@ class Magnetometer {
 		MAG_SUCCESS = 0
 	};
 
+	/* Magnetic declination: -19° 22' in Florianópolis */
+	const float magDec =  -0.338;
 
 public:
 	Magnetometer();

@@ -35,7 +35,7 @@ public:
 	enum servoID {ZENITH_SERVO, AZIMUTH_SERVO};
 	enum direction {CLOCKWISE, COUNTERCLOCKWISE};
 
-	void testRun(enum servoID servo, enum direction dir, uint32_t pulses);
+	void goPos(enum servoID servo, enum direction dir, uint32_t pulses);
 };
 
 #endif /* PRU_H_ */

@@ -7,11 +7,16 @@ dataSize = size (data)
 
 // Some invertions to show graph as literature
 for (i=1:1:dataSize(1))
-    if (data(i,1) > 120) then     
+    if (data(i,1) > 180) then     
         temp(i,1) = data(i,1) - 360
     end
 end
 temp(:,1) = -temp(:,1)
+
+//pulsesA = 320/180*(90 - temp(:,2))
+pulsesA =  90 - temp(:,2)
+
+
 
 // 3d graph
 x = sind(temp(:,1));

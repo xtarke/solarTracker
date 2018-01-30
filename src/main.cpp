@@ -27,28 +27,20 @@ int main() {
 
 	if (getuid() != 0){
 		std::cout << "You must run this program as root. Exiting.\n";
-		//exit(EXIT_FAILURE);
+		exit(EXIT_FAILURE);
 	}
 
-
-
-//	Magnetometer bussula;
-
-//	for (int i=0; i < 50; i++){
-//		bussula.refresh();
-//		sleep(1);
-//	}
-
-
 	SolarTracker solarTracaker("/dev/ttyS1");
-	//PRU hardware;
 
-	//hardware.testRun(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 2);
-	//usleep(10);
-	//hardware.testRun(PRU::ZENITH_SERVO, PRU::CLOCKWISE, 10);
+
+	//hardware.testRun(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 500);
 	//sleep(1);
-//	hardware.testRun(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 500);
+	//hardware.testRun(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 500);
 	//sleep(1);
+	//hardware.testRun(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, 3200);
+	//sleep(1);
+	//hardware.testRun(PRU::ZENITH_SERVO, PRU::CLOCKWISE, 3200);
+
 
 
 	return 0;

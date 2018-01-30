@@ -11,6 +11,7 @@
 #include "GPS.h"
 #include "Magnetometer.h"
 #include "MqttComm.h"
+#include "PRU.h"
 
 #include "spa/spa.h"
 
@@ -24,6 +25,8 @@ private:
 	GPS *serialGPS;
 	Magnetometer *magSensor;
 	MqttComm *myComm;
+
+	PRU *realTimeHardware;
 
 	/* Threads */
 	std::thread *gpsComThread;
@@ -57,6 +60,39 @@ private:
 
 	void readLocConfFile();
 	int writeLocConfFile();
+
+
+	/* Zenith position */
+	int currentZePulsePos;
+	/* elevationNormalized is between 0 and 180 degress *
+	 * Info: Lego model
+	 *
+	 * if morning: [0,90]
+	 * if afternoon: [90,180]
+	 *
+	 */
+	double elevationNormalized;
+
+	void zeRepos();
+	void zeGoHome();
+
+
+	/* Azimuth position */
+	int currentAzPulsePos;
+	/* azimuthNormalized is betwwn -180 and 180 degress *
+	 * [-180,0] -> Morning *
+	 * [0,+180] -> Afternoon */
+	double azimuthNormalized;
+
+
+	int checkSunRiseSunSet();
+
+	enum daynight {
+		SUN_OK	= 0,
+		BEFORE_SUNRISE = -1,
+		AFTER_SUNSET = -2
+	};
+
 
 	std::vector<std::string> split(const std::string& text, const std::string& delims)
 	{

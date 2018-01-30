@@ -26,8 +26,8 @@
             pinctrl-single,pins = <
                0x1a4 0x05  // P9_27 pr1_pru0_pru_r30_5, MODE5 | OUTPUT | PRU -> P9.27   PULSE_PIN_Z
                0x19c 0x05  // P9_28 pr1_pru0_pru_r30_3, MODE5 | OUTPUT | PRU -> P9.28   CLOCKWISE_PIN_A
-               0x194 0x05  // P9_29 pr1_pru0_pru_r30_1, MODE5 | OUTPUT | PRU -> P9.30   CLOCKWISE_PIN_Z
-               0x198 0x05  // P9_30 pr1_pru0_pru_r30_2, MODE5 | OUTPUT | PRU -> P9.31   PULSE_PIN_A
+               0x194 0x05  // P9_29 pr1_pru0_pru_r30_1, MODE5 | OUTPUT | PRU -> P9.29   CLOCKWISE_PIN_Z
+               0x198 0x05  // P9_30 pr1_pru0_pru_r30_2, MODE5 | OUTPUT | PRU -> P9.30   PULSE_PIN_A
             >;
          };
       };
@@ -39,13 +39,14 @@
          status = "okay";
          pinctrl-names = "default";
          pinctrl-0 = <&pru_pru_pins>;
-         my_pins {
+ 
+        /* my_pins {
             pin-names = "abort", "clock", "datain", "sync";
             gpios               = <&gpio3 19 0
                                    &gpio3 17 0
                                    &gpio3 15 0
                                    &gpio3 16 0>;         
-         };
+         };*/ ---> Commented for work with Debian. 
       };
    };
 

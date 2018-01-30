@@ -42,7 +42,7 @@ Magnetometer::Magnetometer() {
 
 int Magnetometer::refresh(){
 
-	double angle;
+	double angle, angleDeg;
 	uint8_t data[6] = {0,0,0,0,0,0};
 
 	if (status == MAG_SUCCESS){
@@ -59,18 +59,27 @@ int Magnetometer::refresh(){
 #endif
 
 		x = (data[0] << 8) | data[1];
-		y = (data[2] << 8) | data[3];
-		z = (data[4] << 8) | data[5];
+		z = (data[2] << 8) | data[3];
+		y = (data[4] << 8) | data[5];
 
-//#ifdef DEBUG
+#ifdef DEBUG
 		std::cout << "-------------" << std::endl;
 		printf("x= %d\n", x);
 		printf("y= %d\n", y);
 		printf("z= %d\n", z);
-//#endif
-		angle = atan2 (z,x) * 180 / M_PI;
+#endif
+		angle = atan2 (y,x);
 
-		std::cout << "Angle: " << angle << std::endl;
+		angle += magDec;
+
+		if(angle < 0)
+		   angle +=  2 *M_PI;
+		if(angle > 2 * M_PI)
+		   angle -= 2*M_PI;
+
+		angleDeg = angle * 180/M_PI;
+
+		std::cout << "Angle: " << angleDeg << std::endl;
 
 	}
 
