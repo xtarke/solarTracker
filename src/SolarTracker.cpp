@@ -26,6 +26,15 @@ void SolarTracker::GPSComThreadFunction(){
 	int ret, localCmd = SOLAR_RUNNING;
 	int i = 0;
 
+	/* Previous calculated zenith angle            *
+	 * Used to calculate delta between            *
+	 * two interactions. 180 is not a valid angle *
+	 * but it is used to ignore first iteration   */
+	double zenithk_1 = 180;
+	double deltaZenith = 0;
+	double azimuthk_1 = 0;
+	double deltaAzimuth = 0;
+
 	while (localCmd == SOLAR_RUNNING){
 
 		/* Read exit command */
@@ -58,16 +67,34 @@ void SolarTracker::GPSComThreadFunction(){
 			continue;
 		}
 
+		/* Ignore first iteration: it needs a valid angle first */
+		if (zenithk_1 == 180) {
+			zenithk_1 = spa.zenith;
+			azimuthk_1 = spa.azimuth;
+			continue;
+		}
+
+		/* Calculate deltas:                  *
+		 * if Zenith delta is lower than 0,   *
+		 * Sun is rising. Else it is setting  */
+		deltaZenith = spa.zenith - zenithk_1;
+		zenithk_1 = spa.zenith;
+		deltaAzimuth = spa.azimuth - azimuthk_1;
+		azimuthk_1 = spa.azimuth;
+
+		std::cout << "Delta Zenith: " << deltaZenith << std::endl;
+
 		/* Normalize angles: */
 		azimuthNormalized = (spa.azimuth > 180) ? (360.0 - spa.azimuth) : (-spa.azimuth);
 
 		if (azimuthNormalized < 0)
-			elevationNormalized = spa.zenith - 90;
+			elevationNormalized = 90 - spa.zenith;
 		else
 			elevationNormalized = spa.zenith + 90;
 
 		/* Update hardware position Zenith angle */
 		zeRepos();
+		azRepos();
 
 		/* Publish azimuth */
 		std::string stringValue = std::to_string(spa.azimuth);
@@ -87,8 +114,6 @@ void SolarTracker::GPSComThreadFunction(){
 		stringValue = std::to_string(spa.latitude);
 		myComm->publish(NULL, "solar/gps/ele", stringValue.length(), stringValue.c_str(), 0 , false);
 
-
-
 		/* Debug
 		 * publish each 5min*/
 		if (i % 300 == 0) {
@@ -101,7 +126,7 @@ void SolarTracker::GPSComThreadFunction(){
 		}
 		/* Publish ret */
 		stringValue = std::to_string(azimuthNormalized) + " " + std::to_string(elevationNormalized) + " " +
-				std::to_string(currentZePulsePos);
+				std::to_string(currentZePulsePos) + " " + std::to_string(currentAzPulsePos);
 		myComm->publish(NULL, "solar/norm", stringValue.length(), stringValue.c_str(), 0 , false);
 
 		i++;
@@ -111,6 +136,70 @@ void SolarTracker::GPSComThreadFunction(){
 		// std::cout << "local CMD: " << localCmd << std::endl;
 	}
 }
+
+void SolarTracker::azRepos(){
+
+	int azimuthPulses = azimuthNormalized * 900.0/180.0;
+	int azDeltaPulses = azimuthPulses - currentAzPulsePos;
+	int pulses;
+
+	std::cout << "azDeltaPulses: "  << azDeltaPulses << std::endl;
+
+	/* Morning: go east */
+	if (azimuthPulses < 0){
+
+		pulses = abs(azDeltaPulses);
+
+		if ((currentAzPulsePos > -950) && (pulses > 0)) {
+
+			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
+			currentAzPulsePos = azimuthPulses;
+
+			std::cout << "\tcurrentAzPulsePos: " << currentAzPulsePos << std::endl;
+		}
+	}
+
+	/* Afternoon: go west */
+	if (azimuthPulses >= 0){
+
+		pulses = abs(azDeltaPulses);
+
+		if ((currentAzPulsePos < 950) && (pulses > 0)){
+			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+			currentAzPulsePos = azimuthPulses;
+
+			std::cout << "\tcurrentAzPulsePos: " << currentAzPulsePos << std::endl;
+		}
+	}
+}
+
+void SolarTracker::azGoHome(){
+
+	int pulses = abs(currentAzPulsePos);
+
+	/* Morning: go back from east */
+	if ((currentAzPulsePos < 0) && (pulses < 950) ){
+
+		std::cout << "\tReturning: " << pulses << "pulses" << std::endl;
+		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+
+		/* Store current position */
+		currentAzPulsePos = 0;
+	}
+
+	/* Afternoon: go back from west */
+	if ((currentAzPulsePos > 0) && (pulses < 950)) {
+		std::cout << "\tReturning: " << pulses << "pulses" << std::endl;
+
+		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
+
+		/* Store current position */
+		currentAzPulsePos = 0;
+	}
+
+
+}
+
 
 void SolarTracker::zeRepos(){
 
@@ -122,7 +211,6 @@ void SolarTracker::zeRepos(){
 	/* Do for delta pulses */
 	if (currentZePulsePos < 3200 && zeDeltaPulses > 0) {
 		realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, zeDeltaPulses);
-
 		/* Store current position */
 		currentZePulsePos = zenithPulses;
 	}
@@ -134,12 +222,12 @@ void SolarTracker::zeRepos(){
 void SolarTracker::zeGoHome(){
 
 	if ((currentZePulsePos < 3200) && (currentZePulsePos > 0)){
-		std::cout << "Returning: " << currentZePulsePos << "pulses" << std::endl;
+		std::cout << "\tReturning: " << currentZePulsePos << "pulses" << std::endl;
 		realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, currentZePulsePos);
 		currentZePulsePos = 0;
 	}
 	else
-		std::cerr << "Number of pulses outside hardware window: " << currentZePulsePos << std::endl;
+		std::cerr << "Zenith Number of pulses outside hardware window: " << currentZePulsePos << std::endl;
 }
 
 int SolarTracker::checkSunRiseSunSet(){
@@ -352,22 +440,28 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 int SolarTracker::writeLocConfFile(){
 
 	int ret = 0;
-	std::ofstream confFileOut ("loc.conf");
 
-	if (confFileOut.is_open()){
-		confFileOut << std::fixed << std::setprecision(6);
+	ret = serialGPS->ReadandParse();
 
-		latitude      = serialGPS->get_latitue();
-		longitude     = serialGPS->get_longitute();
-		elevation     = serialGPS->get_altitude();
+	if (ret == 0) {
 
-		confFileOut << latitude << ";" << longitude << ";" << elevation;
+		std::ofstream confFileOut ("loc.conf");
 
-		confFileOut.close();
+		if (confFileOut.is_open()){
+			confFileOut << std::fixed << std::setprecision(6);
 
-	} else{
-		std::cerr << "Could not write loc.conf... Aborting" << std::endl;
-		ret = -1;
+			latitude      = serialGPS->get_latitue();
+			longitude     = serialGPS->get_longitute();
+			elevation     = serialGPS->get_altitude();
+
+			confFileOut << latitude << ";" << longitude << ";" << elevation;
+
+			confFileOut.close();
+
+		} else{
+			std::cerr << "Could not write loc.conf... Aborting" << std::endl;
+			ret = -1;
+		}
 	}
 
 	return ret;
@@ -408,7 +502,8 @@ SolarTracker::~SolarTracker() {
 	/* Write last known location */
 	writeLocConfFile();
 	/* Go home position */
-	//zeGoHome();
+	zeGoHome();
+	azGoHome();
 
 	myComm->disconnect();
 

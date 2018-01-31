@@ -72,7 +72,6 @@ private:
 	 *
 	 */
 	double elevationNormalized;
-
 	void zeRepos();
 	void zeGoHome();
 
@@ -83,7 +82,8 @@ private:
 	 * [-180,0] -> Morning *
 	 * [0,+180] -> Afternoon */
 	double azimuthNormalized;
-
+	void azRepos();
+	void azGoHome();
 
 	int checkSunRiseSunSet();
 
