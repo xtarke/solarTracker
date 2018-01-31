@@ -35,12 +35,13 @@ private:
 	std::thread *MagComThread;
 	void MagComThreadFunction();
 
-	void SPACalculationThreadFunction(int mode);
-
 	std::thread *inputOutputThread;
 	void inputOutputFunction();
-	std::mutex inputOutputMutex;
-	int cmd;
+
+	std::thread *mqqtPublishThread;
+	void mqttPublishFunction();
+
+	void SPACalculation(int mode);
 
 	enum solar_cmds {
 		SOLAR_RUNNING = 0,
@@ -56,34 +57,37 @@ private:
 	double latitude;
 	double elevation;
 
-	spa_data spa;
+	std::mutex inputOutputMutex;
+
+	/* Read/Write in this structure should be protected with a mutex */
+	struct solarStatus_t {
+		int cmd;
+		spa_data spa;
+		int GPSstatus;
+
+		/* Zenith position */
+		int currentZePulsePos;
+		/* elevationNormalized is between 0 and 180 degress *
+		 * Info: Lego model
+		 * if morning: [0,90] if afternoon: [90,180]	 **/
+		double elevationNormalized;
+
+		/* Azimuth position */
+		int currentAzPulsePos;
+		/* azimuthNormalized is betwwn -180 and 180 degress *
+		 * [-180,0] -> Morning *
+		 * [0,+180] -> Afternoon */
+		double azimuthNormalized;
+
+	} solarStatus;
 
 	void readLocConfFile();
 	int writeLocConfFile();
 
-
-	/* Zenith position */
-	int currentZePulsePos;
-	/* elevationNormalized is between 0 and 180 degress *
-	 * Info: Lego model
-	 *
-	 * if morning: [0,90]
-	 * if afternoon: [90,180]
-	 *
-	 */
-	double elevationNormalized;
-	void zeRepos();
-	void zeGoHome();
-
-
-	/* Azimuth position */
-	int currentAzPulsePos;
-	/* azimuthNormalized is betwwn -180 and 180 degress *
-	 * [-180,0] -> Morning *
-	 * [0,+180] -> Afternoon */
-	double azimuthNormalized;
 	void azRepos();
 	void azGoHome();
+	void zeRepos();
+	void zeGoHome();
 
 	int checkSunRiseSunSet();
 

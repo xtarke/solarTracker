@@ -48,7 +48,6 @@ public:
 		GPS_SUCCESS = 0
 	};
 
-
 private:
 	/* Serial tty communication */
 	SerialCom *gpsCom;
