@@ -33,13 +33,19 @@ int main() {
 	SolarTracker solarTracaker("/dev/ttyS1");
 	//PRU hardware;
 
-	//hardware.goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 900);
+
+/*	for (int i=0; i < 60; i++) {
+		hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 1);
+		sleep(1);
+
+	} */
+	//hardware.goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 395);
 	//sleep(1);
-	//hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 900);
+	// hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 200);
 	//sleep(1);
 	//hardware.testRun(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, 3200);
 	//sleep(1);
-	//hardware.testRun(PRU::ZENITH_SERVO, PRU::CLOCKWISE, 3200);
+	//hardware.goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, 2199);
 
 
 

@@ -41,11 +41,15 @@ private:
 	std::thread *mqqtPublishThread;
 	void mqttPublishFunction();
 
+	std::thread *mqqtCommandsThread;
+	void mqttCommandsFunction();
+
 	void SPACalculation(int mode);
 
 	enum solar_cmds {
 		SOLAR_RUNNING = 0,
-		SOLAR_EXIT = 1
+		SOLAR_MANUAL = 1,
+		SOLAR_EXIT = 2
 	};
 
 	enum spa_mode{
@@ -89,12 +93,20 @@ private:
 	void zeRepos();
 	void zeGoHome();
 
+	void azManualPos(int pulses);
+	void zeManualPos(int pulses);
+
 	int checkSunRiseSunSet();
 
 	enum daynight {
 		SUN_OK	= 0,
 		BEFORE_SUNRISE = -1,
 		AFTER_SUNSET = -2
+	};
+
+	enum hardwareLimits {
+		AZ_MAX_PULSES = 950,
+		ZE_MAX_PULSES = 3200
 	};
 
 

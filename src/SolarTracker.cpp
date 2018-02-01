@@ -34,7 +34,7 @@ void SolarTracker::GPSComThreadFunction(){
 	//double azimuthk_1 = 0;
 	// double deltaAzimuth = 0;
 
-	while (localCmd == SOLAR_RUNNING){
+	while (localCmd != SOLAR_EXIT){
 
 		/* Read exit command */
 		inputOutputMutex.lock();
@@ -65,14 +65,6 @@ void SolarTracker::GPSComThreadFunction(){
 			SPACalculation(LOCAL_PARAM);
 		}
 
-		ret = checkSunRiseSunSet();
-
-		if (ret < 0) {
-			zeGoHome();
-			azGoHome();
-			continue;
-		}
-
 		/* Ignore first iteration: it needs a valid angle first */
 		if (zenithk_1 == 180) {
 			zenithk_1 = solarStatus.spa.zenith;
@@ -88,18 +80,33 @@ void SolarTracker::GPSComThreadFunction(){
 		//deltaAzimuth = solarStatus.spa.azimuth - azimuthk_1;
 		//azimuthk_1 = solarStatus.spa.azimuth;
 
+
+		std::cout << "\t\t\tdeltaZenith: " << deltaZenith << std::endl;
+
 		/* Normalize angles: */
 		inputOutputMutex.lock();
 		solarStatus.azimuthNormalized = (solarStatus.spa.azimuth > 180) ?
 				(360.0 - solarStatus.spa.azimuth) : (-solarStatus.spa.azimuth);
 
 		//
-		//if (solarStatus.azimuthNormalized < 0)
-		if (deltaZenith < 0)
+		if (solarStatus.azimuthNormalized < 0)
+		//if (deltaZenith <= 0)
 			solarStatus.elevationNormalized = 90 - solarStatus.spa.zenith;
 		else
 			solarStatus.elevationNormalized = solarStatus.spa.zenith + 90;
 		inputOutputMutex.unlock();
+
+		/* Do not update if it is in manual or exiting*/
+		if (localCmd != SOLAR_RUNNING)
+			continue;
+
+		/* Go home if is night */
+		ret = checkSunRiseSunSet();
+		if (ret < 0) {
+			zeGoHome();
+			azGoHome();
+			continue;
+		}
 
 		/* Update hardware position Zenith angle */
 		zeRepos();
@@ -115,7 +122,7 @@ void SolarTracker::mqttPublishFunction(){
 	struct solarStatus_t localStatus;
 	localStatus.cmd = SOLAR_RUNNING;
 
-	while (localStatus.cmd == SOLAR_RUNNING){
+	while (localStatus.cmd != SOLAR_EXIT){
 
 		/* Read exit command */
 		inputOutputMutex.lock();
@@ -244,25 +251,28 @@ void SolarTracker::zeRepos(){
 
 	int zenithPulses = solarStatus.elevationNormalized * 320.0/18.0;
 	int zeDeltaPulses = zenithPulses - solarStatus.currentZePulsePos;
+	int pulses = abs(zeDeltaPulses);
 
 	std::cout << "\tzeDeltaPulses: "  << zeDeltaPulses << std::endl;
 
 	/* Do for delta pulses */
-	if (solarStatus.currentZePulsePos < 3200 && zeDeltaPulses > 0) {
-		realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, zeDeltaPulses);
+	if ((solarStatus.currentZePulsePos < 3200) && (solarStatus.currentZePulsePos >= 0) && (pulses > 0)) {
+
+		if (zeDeltaPulses > 0)
+			realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+		else
+			realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, pulses);
+
 		/* Store current position */
 		inputOutputMutex.lock();
 		solarStatus.currentZePulsePos = zenithPulses;
 		inputOutputMutex.unlock();
 	}
-
-	if (solarStatus.currentZePulsePos > 3200)
-		std::cerr << "Number of pulses outside hardware window: " << solarStatus.currentAzPulsePos << std::endl;
 }
 
 void SolarTracker::zeGoHome(){
 
-	if ((solarStatus.currentZePulsePos < 3200) && (solarStatus.currentZePulsePos > 0)){
+	if ((solarStatus.currentZePulsePos <= 3200) && (solarStatus.currentZePulsePos > 0)){
 		std::cout << "\tReturning: " << solarStatus.currentZePulsePos << "pulses" << std::endl;
 		realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, solarStatus.currentZePulsePos);
 
@@ -270,8 +280,7 @@ void SolarTracker::zeGoHome(){
 		solarStatus.currentZePulsePos = 0;
 		inputOutputMutex.unlock();
 	}
-	else
-		std::cerr << "Zenith Number of pulses outside hardware window: " << solarStatus.currentZePulsePos << std::endl;
+
 }
 
 int SolarTracker::checkSunRiseSunSet(){
@@ -306,7 +315,7 @@ void SolarTracker::MagComThreadFunction(){
 
 	int localCmd = SOLAR_RUNNING;
 
-	while (localCmd == SOLAR_RUNNING){
+	while (localCmd != SOLAR_EXIT){
 
 		magSensor->refresh();
 
@@ -334,13 +343,96 @@ void SolarTracker::inputOutputFunction(){
 			std::cerr << "Invalid input data\n";
 			localCmd = 0;
 		}
-	} while (localCmd == SOLAR_RUNNING);
+	} while (localCmd != SOLAR_EXIT);
 
 
-	/* Test exit command */
+	/* Exit command */
 	inputOutputMutex.lock();
 	solarStatus.cmd = localCmd;
 	inputOutputMutex.unlock();
+}
+
+void SolarTracker::mqttCommandsFunction(){
+
+	int localCmd = SOLAR_RUNNING, mycmd;
+
+	while (localCmd != SOLAR_EXIT){
+
+		if (!myComm->queueCmdIsEmpty()) {
+			mycmd = myComm->deQueueCmd();
+
+			inputOutputMutex.lock();
+			solarStatus.cmd = mycmd;
+			inputOutputMutex.unlock();
+		}
+
+		if (!myComm->queueAzIsEmpty() ) {
+			mycmd = myComm->deQueueAz();
+			if (localCmd == SOLAR_MANUAL)
+				azManualPos(mycmd);
+		}
+
+		/* Read exit command */
+		inputOutputMutex.lock();
+		localCmd = solarStatus.cmd;
+		inputOutputMutex.unlock();
+
+		sleep(1);
+	}
+
+}
+
+void SolarTracker::azManualPos(int pulses){
+
+	int currentPos = 0;
+	int azDeltaPulses;
+	int absPulses;
+
+	/* Read current position */
+	inputOutputMutex.lock();
+	currentPos = solarStatus.currentAzPulsePos;
+	inputOutputMutex.unlock();
+
+	/* Negative value: go East */
+	if (((pulses < 0) && (currentPos > -AZ_MAX_PULSES)) ){
+
+		azDeltaPulses = currentPos + pulses;
+
+		if (azDeltaPulses < -AZ_MAX_PULSES)
+			pulses = -AZ_MAX_PULSES - currentPos;
+
+		absPulses = abs(pulses);
+		currentPos += pulses;
+
+			if (absPulses > 0)
+			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, absPulses);
+
+		/* Store current position */
+		inputOutputMutex.lock();
+		solarStatus.currentAzPulsePos = currentPos;
+		inputOutputMutex.unlock();
+	}
+
+	/* Negative value: go West */
+	if ((pulses > 0) && (currentPos < AZ_MAX_PULSES)){
+
+		azDeltaPulses = currentPos + pulses;
+
+		if (azDeltaPulses > AZ_MAX_PULSES){
+			pulses = AZ_MAX_PULSES - currentPos;
+		}
+
+		currentPos += pulses;
+
+		if (pulses > 0)
+			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+
+		/* Store current position */
+		inputOutputMutex.lock();
+		solarStatus.currentAzPulsePos = currentPos;
+		inputOutputMutex.unlock();
+	}
+
 }
 
 
@@ -441,7 +533,7 @@ void SolarTracker::SPACalculation(int mode){
 
 SolarTracker::SolarTracker(const char* GPSdevFilename) {
 
-	solarStatus.cmd = SOLAR_RUNNING;
+	solarStatus.cmd = SOLAR_MANUAL;
 	solarStatus.GPSstatus = GPS::GPS_NOT_READY;
 
 	/* Zenith pos */
@@ -477,9 +569,9 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
 	//MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
-	inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
+	// inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
 	mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
-
+	mqqtCommandsThread = new std::thread(&SolarTracker::mqttCommandsFunction, this);
 
 }
 
@@ -541,23 +633,26 @@ void SolarTracker::readLocConfFile(){
 
 
 SolarTracker::~SolarTracker() {
-	inputOutputThread->join();
+	//inputOutputThread->join();
 	gpsComThread->join();
 	//MagComThread->join();
 	mqqtPublishThread->join();
+	mqqtCommandsThread->join();
 
 	/* Write last known location */
 	writeLocConfFile();
 	/* Go home position */
+
 	zeGoHome();
 	azGoHome();
 
 	myComm->disconnect();
 
-	delete inputOutputThread;
+	//delete inputOutputThread;
 	delete gpsComThread;
 	//delete MagComThread;
 	delete mqqtPublishThread;
+	delete mqqtCommandsThread;
 
 	delete serialGPS;
 	delete magSensor;

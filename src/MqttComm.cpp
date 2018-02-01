@@ -42,9 +42,11 @@ void MqttComm::on_connect(int rc)
 	std::cout << "Connected with code %d. \n";
 
 	if (rc == 0) {
-		ret = subscribe(NULL, "solar/cmd");
+		ret = subscribe(NULL, topics[0].c_str());
+		ret = subscribe(NULL, topics[1].c_str());
+		ret = subscribe(NULL, topics[2].c_str());
 
-		std::cout << "subscribe: " << ret << "\n";
+		std::cout << "subscribe: " << ret << std::endl;
 	}
 }
 
@@ -55,6 +57,68 @@ void MqttComm::on_subcribe(int mid, int qos_count, const int *granted_qos)
 
 void MqttComm::on_message(const struct mosquitto_message *message){
 
-	std::cout << "Message  received: " << (*(char *)message->payload) << "\n";
+	std::string topic = message->topic;
+	std::string messageString;
+	int cmd = 0;
+	int zePos = 0;
+	int azPos = 0;
+
+	for (int i=0; i < message->payloadlen; i++){
+		char c = ((char *)message->payload)[i];
+		messageString.push_back(c);
+	}
+
+	if (topic.compare(topics[0]) == 0){
+		try {
+			cmd = std::stoi(messageString);
+			cmdMessageQueue.push(cmd);
+		}catch(const std::exception& e){
+			std::cerr << "Mqqt cmd invalid" << std::endl;
+		}
+	}
+
+	if (topic.compare(topics[1]) == 0){
+		try {
+			azPos = std::stoi(messageString);
+			azMessageQueue.push(azPos);
+		}catch(const std::exception& e){
+			std::cerr << "Mqqt az invalid" << std::endl;
+		}
+	}
+
+
+	if (topic.compare(topics[2]) == 0){
+		try {
+			zePos = std::stoi(messageString);
+			azMessageQueue.push(zePos);
+		}catch(const std::exception& e){
+			std::cerr << "Mqqt ze invalid" << std::endl;
+		}
+	}
+
+	std::cout << "\tMQTT Topic: " << topic << std::endl;
+	std::cout << "\tMQQT Message: " << messageString << std::endl;
+}
+
+int MqttComm::deQueueCmd(){
+
+	int ret = cmdMessageQueue.front();
+	cmdMessageQueue.pop();
+
+	return ret;
+}
+
+int MqttComm::deQueueZe(){
+	int ret = zeMessageQueue.front();
+	zeMessageQueue.pop();
+
+	return ret;
+}
+
+int MqttComm::deQueueAz(){
+	int ret = azMessageQueue.front();
+	azMessageQueue.pop();
+
+	return ret;
 }
 
