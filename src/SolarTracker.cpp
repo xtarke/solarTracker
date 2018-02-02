@@ -184,11 +184,15 @@ void SolarTracker::azRepos(){
 	std::cout << "\tazDeltaPulses: "  << azDeltaPulses << std::endl;
 
 	/* Morning: go east */
-	if (azimuthPulses < 0){
+	if (azDeltaPulses < 0){
 
 		pulses = abs(azDeltaPulses);
 
 		if ((solarStatus.currentAzPulsePos > -950) && (pulses > 0)) {
+
+
+			std::cout << "Going east: " << pulses << std::endl;
+
 
 			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
 
@@ -201,11 +205,14 @@ void SolarTracker::azRepos(){
 	}
 
 	/* Afternoon: go west */
-	if (azimuthPulses >= 0){
+	if (azDeltaPulses >= 0){
 
 		pulses = abs(azDeltaPulses);
 
 		if ((solarStatus.currentAzPulsePos < 950) && (pulses > 0)){
+
+			std::cout << "Going west: " << pulses << std::endl;
+
 			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
 
 			inputOutputMutex.lock();
@@ -455,11 +462,11 @@ void SolarTracker::SPACalculation(int mode){
 #endif
 
 	if (mode == GPS_ONLINE){
-		solarStatus.spa.hour          = serialGPS->get_hh() - 2;
+		solarStatus.spa.hour          = serialGPS->get_hh() - 3;
 		solarStatus.spa.minute        = serialGPS->get_mm();
 		solarStatus.spa.second        = serialGPS->get_ss();
 	}else {
-		solarStatus.spa.hour          = now->tm_hour - 2;
+		solarStatus.spa.hour          = now->tm_hour - 3;
 		solarStatus.spa.minute        = now->tm_min;
 		solarStatus.spa.second        = now->tm_sec;
 	}
