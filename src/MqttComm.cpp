@@ -45,6 +45,8 @@ void MqttComm::on_connect(int rc)
 		ret = subscribe(NULL, topics[0].c_str());
 		ret = subscribe(NULL, topics[1].c_str());
 		ret = subscribe(NULL, topics[2].c_str());
+		ret = subscribe(NULL, topics[3].c_str());
+		ret = subscribe(NULL, topics[4].c_str());
 
 		std::cout << "subscribe: " << ret << std::endl;
 	}
@@ -90,9 +92,27 @@ void MqttComm::on_message(const struct mosquitto_message *message){
 	if (topic.compare(topics[2]) == 0){
 		try {
 			zePos = std::stoi(messageString);
-			azMessageQueue.push(zePos);
+			zeMessageQueue.push(zePos);
 		}catch(const std::exception& e){
 			std::cerr << "Mqqt ze invalid" << std::endl;
+		}
+	}
+
+	if (topic.compare(topics[3]) == 0){
+		try {
+			zePos = std::stoi(messageString);
+			zeSetHomeMessageQueue.push(zePos);
+		}catch(const std::exception& e){
+			std::cerr << "Mqqt ze invalid" << std::endl;
+		}
+	}
+
+	if (topic.compare(topics[4]) == 0){
+		try {
+			azPos = std::stoi(messageString);
+			azSetHomeMessageQueue.push(azPos);
+		}catch(const std::exception& e){
+			std::cerr << "Mqqt az invalid" << std::endl;
 		}
 	}
 
@@ -118,6 +138,20 @@ int MqttComm::deQueueZe(){
 int MqttComm::deQueueAz(){
 	int ret = azMessageQueue.front();
 	azMessageQueue.pop();
+
+	return ret;
+}
+
+int MqttComm::deQueueZeHome(){
+	int ret = zeSetHomeMessageQueue.front();
+	zeSetHomeMessageQueue.pop();
+
+	return ret;
+}
+
+int MqttComm::deQueueAzHome(){
+	int ret = azSetHomeMessageQueue.front();
+	azSetHomeMessageQueue.pop();
 
 	return ret;
 }

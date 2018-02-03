@@ -20,8 +20,12 @@ private:
 	std::queue<int> zeMessageQueue;
 	std::queue<int> azMessageQueue;
 
+	std::queue<int> zeSetHomeMessageQueue;
+	std::queue<int> azSetHomeMessageQueue;
+
 	/* App cmd topics */
-	const std::string topics[3] = {"solar/cmd", "solar/cmd/azrepos" , "solar/cmd/zerepos"};
+	const std::string topics[5] = {"solar/cmd", "solar/cmd/azrepos" , "solar/cmd/zerepos",
+									"solar/cmd/zesethome", "solar/cmd/azsethome"};
 
 	/* Implementation of mosquittopp virtual functions */
 	void on_connect(int rc);
@@ -41,6 +45,12 @@ public:
 
 	int deQueueAz();
 	bool queueAzIsEmpty() { return azMessageQueue.empty(); }
+
+	int deQueueZeHome();
+	bool queueZeHomeIsEmpty() { return zeSetHomeMessageQueue.empty(); }
+
+	int deQueueAzHome();
+	bool queueAzHomeIsEmpty() { return azSetHomeMessageQueue.empty(); }
 
 };
 

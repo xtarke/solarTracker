@@ -18,24 +18,38 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
         - "0" -> Solar tracker activated
         - "0" -> Manual
         - "2" -> Turn off system. Azimuth and Zenith axis go to "home position"
-    
+
     - "solar/cmd/azrepos": reposition of Azimuth axis in pulses. Hardware max/min angles are proteced
         - Value lower than zero rotates clockwise
         - Value higher than zero rotates counterclowise
         - Only works in Manual mode
+
     - "solar/cmd/zerepos": reposition of Zenith axis in pulses. Hardware max/min angles are proteced
-        - NOT IMPLEMENTED YET
+        - Value lower than zero rotates clockwise
+        - Value higher than zero rotates counterclowise
+        - Only works in Manual mode
+        
+    - "solar/cmd/zesethome": Move Zenith axis (pulses). NO HARDWARE PROTECTION.
+        - Value lower than zero rotates clockwise
+        - Value higher than zero rotates counterclowise
+        - Only works in Manual mode
+    
+    - "solar/cmd/azsethome": Move Azimuth axis (pulses). NO HARDWARE PROTECTION.
+        - Value lower than zero rotates clockwise
+        - Value higher than zero rotates counterclowise
         - Only works in Manual mode
 
 - Informations: (to subscribe):
     - "solar/gps/status": current GPS status (updated updated every 1 second)
     - "solar/az": current SPA Azimuth angle (updated updated every 1 second)
     - "solar/ze": current SPA Zenith angle (updated updated every 1 second)
-    - "solar/longitude": currrent GPS longiute (degress) (updated updated every 1 second)
-    - "solar/latitude": current GPS latitute (degress) (updated updated every 1 second)
-    - "solar/elevation": current GPS elevation (m) (updated updated every 1 second)
+    - "solar/gps/longitude": currrent GPS longiute (degress) (updated updated every 1 second)
+    - "solar/gps/latitude": current GPS latitute (degress) (updated updated every 1 second)
+    - "solar/gps/elevation": current GPS elevation (m) (updated updated every 1 second)
     - "solar/debug": CSV format az,ze,gps status, current time ((updated updated every 5 minutes)
     - "solar/norm": Azimuth Zenith AzPulses ZePulses (updated updated every 1 second)
+    - "solar/sunrise": SPA sunrise time
+    - "solar/sunset": SPA sunset time
 
 ### Hardware notes
     

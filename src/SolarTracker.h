@@ -75,6 +75,7 @@ private:
 		 * Info: Lego model
 		 * if morning: [0,90] if afternoon: [90,180]	 **/
 		double elevationNormalized;
+		double deltaZenith;
 
 		/* Azimuth position */
 		int currentAzPulsePos;
@@ -95,6 +96,9 @@ private:
 
 	void azManualPos(int pulses);
 	void zeManualPos(int pulses);
+
+	void zeSetHomePos(int pulses);
+	void azSetHomePos(int pulses);
 
 	int checkSunRiseSunSet();
 
