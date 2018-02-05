@@ -45,6 +45,7 @@ private:
 	void mqttCommandsFunction();
 
 	void SPACalculation(int mode);
+	void getSolarNoonZeAngle();
 
 	enum solar_cmds {
 		SOLAR_RUNNING = 0,
@@ -76,6 +77,7 @@ private:
 		 * if morning: [0,90] if afternoon: [90,180]	 **/
 		double elevationNormalized;
 		double deltaZenith;
+		double minZenith;
 
 		/* Azimuth position */
 		int currentAzPulsePos;

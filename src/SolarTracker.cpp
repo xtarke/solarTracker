@@ -34,6 +34,9 @@ void SolarTracker::GPSComThreadFunction(){
 	//double azimuthk_1 = 0;
 	// double deltaAzimuth = 0;
 
+	/* Zenith angle between 0 a 180 degress */
+	double scaledZenith = 0;
+
 	while (localCmd != SOLAR_EXIT){
 
 		/* Read exit command */
@@ -88,13 +91,21 @@ void SolarTracker::GPSComThreadFunction(){
 				(360.0 - solarStatus.spa.azimuth) : (-solarStatus.spa.azimuth);
 
 		//
-		//if (solarStatus.azimuthNormalized < 0)  <--- Can't use this
+		//if (solarStatus.azimuthNormalized < 0)
 
 		/* Test Zenith derivative. If zero, does nothing */
-		if (solarStatus.deltaZenith < 0)
+		/* if (solarStatus.deltaZenith < 0)
 			solarStatus.elevationNormalized = 90 - solarStatus.spa.zenith;
 		else if (solarStatus.deltaZenith > 0)
-			solarStatus.elevationNormalized = solarStatus.spa.zenith + 90;
+			solarStatus.elevationNormalized = solarStatus.spa.zenith + 90; */
+
+		if ((solarStatus.deltaZenith < 0) && (solarStatus.azimuthNormalized < 0))
+			scaledZenith = solarStatus.spa.zenith;
+		else if ((solarStatus.deltaZenith > 0) && (solarStatus.azimuthNormalized >= 0))
+			scaledZenith = -solarStatus.spa.zenith + 2*solarStatus.minZenith;
+
+		solarStatus.elevationNormalized = 90 - scaledZenith;
+
 		inputOutputMutex.unlock();
 
 		/* Do not update if it is in manual or exiting*/
@@ -563,6 +574,64 @@ void SolarTracker::zeManualPos(int pulses){
 
 }
 
+void SolarTracker::getSolarNoonZeAngle(){
+	int result;
+	/* System Data */
+	time_t t = time(0);
+	struct tm * now = localtime(&t);
+
+	spa_data spa;
+
+	double minZenith = 90;
+
+	//enter required input values into SPA structure
+	spa.year          = now->tm_year + 1900;
+	spa.month         = now->tm_mon + 1;
+	spa.day           = now->tm_mday;
+
+	spa.timezone      = -2.0;
+	spa.delta_ut1     = 0;
+	spa.delta_t       = 67;
+
+	spa.longitude     = longitude;
+	spa.latitude      = latitude;
+	spa.elevation     = elevation;
+
+	spa.pressure      = 820;
+	spa.temperature   = 11;
+	spa.slope         = 30;
+	spa.azm_rotation  = -10;
+	spa.atmos_refract = 0.5667;
+	spa.function      = SPA_ZA;
+
+
+	/* Iteration between 10h and 16h: localtime */
+	for (int i=0; i < 6*3600; i++){
+
+		float hour = (float)i / 3600;
+		float min = (hour - (int)hour)*60;
+		float sec = (min - (int)min)*60;
+
+		spa.hour          = 10 + (int)hour ;
+		spa.minute        = (int)min;
+		spa.second        = (int)sec;
+
+		result = spa_calculate(&spa);
+
+		if (result  != 0){
+			std::cerr << "Erro estimating min Zenith angle (spa error code): " << result << std::endl;
+			exit(-1);
+		}
+
+		if (spa.zenith < minZenith)
+			minZenith = spa.zenith;
+	}
+
+	solarStatus.minZenith = minZenith;
+	std::cout << "Min Zenith is:" << minZenith << std::endl;
+
+}
+
 
 void SolarTracker::SPACalculation(int mode){
 	int result;
@@ -583,11 +652,11 @@ void SolarTracker::SPACalculation(int mode){
 #endif
 
 	if (mode == GPS_ONLINE){
-		solarStatus.spa.hour          = serialGPS->get_hh() - 3;
+		solarStatus.spa.hour          = serialGPS->get_hh() - 2;
 		solarStatus.spa.minute        = serialGPS->get_mm();
 		solarStatus.spa.second        = serialGPS->get_ss();
 	}else {
-		solarStatus.spa.hour          = now->tm_hour - 3;
+		solarStatus.spa.hour          = now->tm_hour - 2;
 		solarStatus.spa.minute        = now->tm_min;
 		solarStatus.spa.second        = now->tm_sec;
 	}
@@ -655,7 +724,6 @@ void SolarTracker::SPACalculation(int mode){
 	} else
 		std::cerr << "SPA Error Code: " << result << std::endl;
 
-
 }
 
 
@@ -674,7 +742,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 
 	realTimeHardware = new PRU();
 	serialGPS = new GPS(GPSdevFilename);
-	magSensor = new Magnetometer();
+	// magSensor = new Magnetometer();
 	myComm = new MqttComm("soltTracker", "localhost", 1883);
 
 	/* Check existence of loc.conf */
@@ -695,8 +763,10 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 	}else
 		readLocConfFile();
 
+	getSolarNoonZeAngle();
+
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
-	//MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
+	// MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
 	// inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
 	mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
 	mqqtCommandsThread = new std::thread(&SolarTracker::mqttCommandsFunction, this);
