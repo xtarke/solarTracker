@@ -99,12 +99,14 @@ void SolarTracker::GPSComThreadFunction(){
 		else if (solarStatus.deltaZenith > 0)
 			solarStatus.elevationNormalized = solarStatus.spa.zenith + 90; */
 
-		if ((solarStatus.deltaZenith < 0) && (solarStatus.azimuthNormalized < 0))
+		solarStatus.elevationNormalized = 90 - solarStatus.spa.zenith;
+
+		/* if ((solarStatus.deltaZenith < 0) && (solarStatus.azimuthNormalized < 0))
 			scaledZenith = solarStatus.spa.zenith;
 		else if ((solarStatus.deltaZenith > 0) && (solarStatus.azimuthNormalized >= 0))
 			scaledZenith = -solarStatus.spa.zenith + 2*solarStatus.minZenith;
 
-		solarStatus.elevationNormalized = 90 - scaledZenith;
+		solarStatus.elevationNormalized = 90 - scaledZenith;*/
 
 		inputOutputMutex.unlock();
 
@@ -184,7 +186,8 @@ void SolarTracker::mqttPublishFunction(){
 		//if (i % 300 == 0) {
 			std::string time = std::to_string(localStatus.spa.hour) + ":" +  std::to_string(localStatus.spa.minute) + ":" +
 					std::to_string(localStatus.spa.second);
-			stringValue = std::to_string(localStatus.spa.azimuth) + "," + std::to_string(localStatus.spa.zenith) + "," +
+			stringValue = std::to_string(localStatus.spa.azimuth) +  "," + std::to_string(localStatus.spa.azimuth_astro) + ","
+					+ std::to_string(localStatus.spa.zenith) + "," +
 					std::to_string(localStatus.GPSstatus) + "," + time;
 			myComm->publish(NULL, "solar/debug", stringValue.length(), stringValue.c_str(), 0 , false);
 
@@ -523,9 +526,6 @@ void SolarTracker::zeManualPos(int pulses){
 	currentPos = solarStatus.currentZePulsePos;
 	inputOutputMutex.unlock();
 
-
-	std::cout << "Rx Pulses: " << pulses << std::endl;
-
 	/* Go counterclockwise */
 	if ((pulses > 0) && (currentPos < ZE_MAX_PULSES)){
 
@@ -536,9 +536,6 @@ void SolarTracker::zeManualPos(int pulses){
 		}
 
 		currentPos += pulses;
-
-		std::cout << "\t\t\tgoing: " << pulses << " My New pos:" << currentPos << std::endl;
-
 
 		if (pulses > 0)
 			realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
@@ -557,9 +554,7 @@ void SolarTracker::zeManualPos(int pulses){
 		if (zeDeltaPulses < 0){
 			pulses = 0 - currentPos;
 		}
-
 		currentPos += pulses;
-		std::cout << "\t\t\tgoing: " << pulses << " My New pos:" << currentPos << std::endl;
 
 		absPulses = abs(pulses);
 
@@ -763,7 +758,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 	}else
 		readLocConfFile();
 
-	getSolarNoonZeAngle();
+	//getSolarNoonZeAngle();
 
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
 	// MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
