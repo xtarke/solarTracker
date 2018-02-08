@@ -2,7 +2,7 @@ CXX = arm-linux-gnueabihf-g++
 CC = arm-linux-gnueabihf-gcc
 CFLAGS = -Wall -c -g -O3 -I ../am335x_pru_package/pru_sw/app_loader/include
 CXXFLAGS = -c -Wall -g -O3  -I ../am335x_pru_package/pru_sw/app_loader/include -I./src/ -I ../moslibs/
-LDFLASG = -L ../am335x_pru_package/pru_sw/app_loader/lib/ -lm -pthread -lprussdrv -lmosquitto -lmosquittopp 
+LDFLASG = -L ../am335x_pru_package/pru_sw/app_loader/lib/ -lm -pthread -lprussdrv -lmosquitto -lmosquittopp -lGeographic
 
 
 CSOURCES=./src/spa/spa.c

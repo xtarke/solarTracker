@@ -9,7 +9,9 @@
 #include <iostream>
 #include <math.h>
 
-Magnetometer::Magnetometer() {
+using namespace GeographicLib;
+
+Magnetometer::Magnetometer(float lat, float lon, float alt) {
 
 	int ret, localStatus = MAG_SUCCESS;
 
@@ -38,12 +40,38 @@ Magnetometer::Magnetometer() {
 
 	/* Current Status */
 	status = localStatus;
+	kalman_state.init = false;
+	filtered_bearing = 0;
+
+	updateMagneticDeclination(lat, lon, alt);
 }
+
+void Magnetometer::updateMagneticDeclination(float lat, float lon, float alt){
+
+	/* intermediate Mag model values */
+	double Bx, By, Bz, H;
+
+	/* Determine current time. */
+	time_t t = time(NULL);
+	tm* timePtr = localtime(&t);
+
+	MagneticModel mag("emm2015");
+
+		/* Get intermediate values using current time and position */
+	mag(timePtr->tm_year + 1900, lat, lon, alt, Bx, By, Bz);
+
+	/* Convert intermediate values into field components and store in class members */
+	MagneticModel::FieldComponents(Bx, By, Bz, H,
+		field_strength, magnetic_declination, magnetic_inclination);
+
+}
+
 
 int Magnetometer::refresh(){
 
 	double angle, angleDeg;
 	uint8_t data[6] = {0,0,0,0,0,0};
+
 
 	if (status == MAG_SUCCESS){
 		/* Send initial data register address */
@@ -70,20 +98,48 @@ int Magnetometer::refresh(){
 #endif
 		angle = atan2 (y,x);
 
-		angle += magDec;
-
-		if(angle < 0)
+	/*	if(angle < 0)
 		   angle +=  2 *M_PI;
 		if(angle > 2 * M_PI)
-		   angle -= 2*M_PI;
+		   angle -= 2*M_PI;*/
 
 		angleDeg = angle * 180/M_PI;
 
-		std::cout << "Angle: " << angleDeg << std::endl;
+		if (kalman_state.init == false)
+			kalman_init(0.025f, 16, 1, angleDeg);
 
+		/* Update Filtered Bearing */
+		kalman_update(angleDeg);
+
+		/* Store Filtered Bearing */
+		filtered_bearing = kalman_state.x;
+
+
+		std::cout << "Mag: " << magnetic_inclination << " ";
+		std::cout << "Angle: " << filtered_bearing + magnetic_inclination << " (" << angleDeg << ")"<< std::endl;
 	}
 
 	return MAG_SUCCESS;
+}
+
+void Magnetometer::kalman_init(float q, float r, float p, float x) {
+	kalman_state.q = q;
+	kalman_state.r = r;
+	kalman_state.p = p;
+	kalman_state.x = x;
+
+	kalman_state.init = true;
+}
+
+void Magnetometer::kalman_update(float m) {
+	//prediction update
+	//omit x = x
+	kalman_state.p = kalman_state.p + kalman_state.q;
+
+	//measurement update
+	kalman_state.k = kalman_state.p / (kalman_state.p + kalman_state.r);
+	kalman_state.x = kalman_state.x + kalman_state.k * (m - kalman_state.x);
+	kalman_state.p = (1 - kalman_state.k) * kalman_state.p;
 }
 
 

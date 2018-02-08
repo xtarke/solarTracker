@@ -52,12 +52,14 @@ void SolarTracker::GPSComThreadFunction(){
 			inputOutputMutex.lock();
 			SPACalculation(GPS_ONLINE);
 			solarStatus.GPSstatus = GPS::GPS_SUCCESS;
-			inputOutputMutex.unlock();
 
 			/* Update location */
 			longitude     = serialGPS->get_longitute();
 			latitude      = serialGPS->get_latitue();
 			elevation     = serialGPS->get_altitude();
+
+			inputOutputMutex.unlock();
+
 		}
 		else {
 			inputOutputMutex.lock();
@@ -352,17 +354,21 @@ int SolarTracker::checkSunRiseSunSet(){
 void SolarTracker::MagComThreadFunction(){
 
 	int localCmd = SOLAR_RUNNING;
+	float localLatitute, localLongitute, localElevaltion;
 
-	while (localCmd != SOLAR_EXIT){
+	while ( localCmd != SOLAR_EXIT){
+
+		/* Read gloval values  */
+		inputOutputMutex.lock();
+		localCmd = solarStatus.cmd;
+		localLatitute = latitude;
+		localLongitute = longitude;
+		localElevaltion = elevation;
+		inputOutputMutex.unlock();
 
 		magSensor->refresh();
 
-		/* Read exit command */
-		inputOutputMutex.lock();
-		localCmd = solarStatus.cmd;
-		inputOutputMutex.unlock();
-
-		sleep(1);
+		usleep(50000);
 	}
 }
 
@@ -735,10 +741,10 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 	solarStatus.currentAzPulsePos = 0;
 	solarStatus.azimuthNormalized = 0;
 
-	realTimeHardware = new PRU();
-	serialGPS = new GPS(GPSdevFilename);
-	// magSensor = new Magnetometer();
-	myComm = new MqttComm("soltTracker", "localhost", 1883);
+	//realTimeHardware = new PRU();
+	//serialGPS = new GPS(GPSdevFilename);
+
+	//myComm = new MqttComm("soltTracker", "localhost", 1883);
 
 	/* Check existence of loc.conf */
 	std::ifstream confFileIn ("loc.conf");
@@ -758,13 +764,16 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 	}else
 		readLocConfFile();
 
+	/* After gps is online */
+	magSensor = new Magnetometer(latitude, longitude, elevation);
+
 	//getSolarNoonZeAngle();
 
-	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
-	// MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
-	// inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
-	mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
-	mqqtCommandsThread = new std::thread(&SolarTracker::mqttCommandsFunction, this);
+	//gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
+	MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
+	inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
+	//mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
+	//mqqtCommandsThread = new std::thread(&SolarTracker::mqttCommandsFunction, this);
 
 }
 
@@ -826,11 +835,11 @@ void SolarTracker::readLocConfFile(){
 
 
 SolarTracker::~SolarTracker() {
-	//inputOutputThread->join();
-	gpsComThread->join();
+	inputOutputThread->join();
+	//gpsComThread->join();
 	//MagComThread->join();
-	mqqtPublishThread->join();
-	mqqtCommandsThread->join();
+	//mqqtPublishThread->join();
+	//mqqtCommandsThread->join();
 
 	/* Write last known location */
 	writeLocConfFile();
@@ -841,11 +850,11 @@ SolarTracker::~SolarTracker() {
 
 	myComm->disconnect();
 
-	//delete inputOutputThread;
-	delete gpsComThread;
-	//delete MagComThread;
-	delete mqqtPublishThread;
-	delete mqqtCommandsThread;
+	delete inputOutputThread;
+	//delete gpsComThread;
+	delete MagComThread;
+	//delete mqqtPublishThread;
+	//delete mqqtCommandsThread;
 
 	delete serialGPS;
 	delete magSensor;
