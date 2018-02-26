@@ -16,7 +16,7 @@
 
    /* This overlay uses the following resources */
    exclusive-use =
-         "P9.27", "P9.28", "P9.29",  "P9.30", "pru0";
+         "P8.15", "P8.16", "P9.27", "P9.28", "P9.29",  "P9.30", "pru0";
 
    fragment@0 {
       target = <&am33xx_pinmux>;
@@ -24,6 +24,8 @@
 
          pru_pru_pins: pinmux_pru_pru_pins {   // The PRU pin modes
             pinctrl-single,pins = <
+               0x03c 0x26  // P8_15 pr1_pru_pru_r31_15, MODO6 | INPUT | PRU -> p8.15   ZE_ABORT
+               0x038 0x26  // P8_16 pr1_pru_pru_r31_14, MODE6 | INPUT | PRU -> p8.16   AZ_ABORT
                0x1a4 0x05  // P9_27 pr1_pru0_pru_r30_5, MODE5 | OUTPUT | PRU -> P9.27   PULSE_PIN_Z
                0x19c 0x05  // P9_28 pr1_pru0_pru_r30_3, MODE5 | OUTPUT | PRU -> P9.28   CLOCKWISE_PIN_A
                0x194 0x05  // P9_29 pr1_pru0_pru_r30_1, MODE5 | OUTPUT | PRU -> P9.29   CLOCKWISE_PIN_Z
