@@ -39,7 +39,7 @@ int main() {
 		sleep(1);
 
 	} */
-	hardware.goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, 1500);
+	hardware.goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, 300);
 	sleep(1);
 	// hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 200);
 	//sleep(1);

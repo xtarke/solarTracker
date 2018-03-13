@@ -12,10 +12,7 @@
 #define nr_rept_1msL	0x3a00
 #define nr_rept_1msH    0xC
 
-//#define PULSE_PIN_A		r30.t5      // BB_pin P9.27
-
-#define PULSE_PIN_A		r30.t14      // BB_pin P9.27
-
+#define PULSE_PIN_A		r30.t5      // BB_pin P9.27
 #define PULSE_PIN_Z		r30.t3      // BB_pin P9.28
 #define CLOCKWISE_PIN_A r30.t1      // BB_pin P9.29
 #define CLOCKWISE_PIN_Z r30.t2      // BB_pin P9.30
@@ -40,9 +37,6 @@ Inicio:
 	 
 	// * ATENÇÃO NO REUSO DOS REGISTRADORES ! * //
 
-
-	// qbbs Fim, AZ_ABORT              // halt if P9_28 is set
-	 
 	// verifica qual servo acionar
 	qbeq    Servo_Z, r1, 0  //Se 0 aciona servo Zenite, senao aciona Azimuth
 	//--------------------------------------------------------------------------
@@ -55,10 +49,7 @@ Inicio:
 			clr		CLOCKWISE_PIN_A
 
 		
-		Gera_pulsos_A:
-		
-			qbbs Fim, ZE_ABORT
-		
+		Gera_pulsos_A:					
 			set		PULSE_PIN_A					
 			call	Delay_1ms
 			clr		PULSE_PIN_A	
