@@ -7,7 +7,7 @@
 
 #include "GPS.h"
 
-// #define DEBUG
+#define DEBUG
 
 int GPS::ReadandParse(){
 	int ret;
