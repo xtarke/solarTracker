@@ -30,8 +30,8 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	SolarTracker solarTracaker("/dev/ttyS1");
-	//PRU hardware;
+	//SolarTracker solarTracaker("/dev/ttyS1");
+	PRU hardware;
 
 
 /*	for (int i=0; i < 60; i++) {
@@ -39,9 +39,9 @@ int main() {
 		sleep(1);
 
 	} */
-	//hardware.goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, 300);
+	//hardware.goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, 500);
 	//sleep(1);
-	// hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 200);
+	//hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 500);
 	//sleep(1);
 	//hardware.testRun(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, 3200);
 	//sleep(1);
