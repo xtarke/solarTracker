@@ -66,7 +66,7 @@ void SolarTracker::GPSComThreadFunction(){
 			solarStatus.GPSstatus = ret;
 			inputOutputMutex.unlock();
 
-			std::cerr << "GPS offline, using local parameters" << std::endl;
+			std::cerr << "GPS offline, using local parameters: " << ret << std::endl;
 			SPACalculation(LOCAL_PARAM);
 		}
 
@@ -91,6 +91,9 @@ void SolarTracker::GPSComThreadFunction(){
 		inputOutputMutex.lock();
 		solarStatus.azimuthNormalized = (solarStatus.spa.azimuth > 180) ?
 				(360.0 - solarStatus.spa.azimuth) : (-solarStatus.spa.azimuth);
+
+		/* Normaliza now for Eppley */
+		solarStatus.azimuthNormalized += 180;
 
 		//
 		//if (solarStatus.azimuthNormalized < 0)
@@ -210,7 +213,11 @@ void SolarTracker::mqttPublishFunction(){
 
 void SolarTracker::azRepos(){
 
-	int azimuthPulses = solarStatus.azimuthNormalized * 900.0/180.0;
+	/* For lego */
+	//int azimuthPulses = solarStatus.azimuthNormalized * 900.0/180.0;
+	/* For Eppley */
+	int azimuthPulses = solarStatus.azimuthNormalized / PULSES_PER_STEP;
+
 	int azDeltaPulses = azimuthPulses - solarStatus.currentAzPulsePos;
 	int pulses;
 

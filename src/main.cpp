@@ -30,8 +30,8 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 
-	//SolarTracker solarTracaker("/dev/ttyS1");
-	PRU hardware;
+	SolarTracker solarTracaker("/dev/ttyS1");
+	//PRU hardware;
 
 
 /*	for (int i=0; i < 60; i++) {

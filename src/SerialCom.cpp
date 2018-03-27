@@ -36,7 +36,7 @@ SerialCom::SerialCom(const char* devFilename) {
 	CLOCAL  : local connection, no modem contol
 	CREAD   : enable receiving characters
 	*/
-	newtio.c_cflag = B4800 | CRTSCTS | CS8 | CLOCAL | CREAD;
+	newtio.c_cflag = B9600 | CRTSCTS | CS8 | CLOCAL | CREAD;
 
 	/*
 	IGNPAR  : ignore bytes with parity errors
@@ -101,7 +101,7 @@ int SerialCom::readData(std::string &serialCanData){
 	/* skm53-gps Module sends 6 NEMA frames             *
 	 * Loop interates 12 since each line has \n\r       *
 	 * and read returns for \n and \r in Canonical mode */
-	for (int i = 0; i < 12;i++) {
+	for (int i = 0; i < 14;i++) {
 		readGpsLine(serialCanData);
 	}
 

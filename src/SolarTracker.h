@@ -81,7 +81,7 @@ private:
 
 		/* Azimuth position */
 		int currentAzPulsePos;
-		/* azimuthNormalized is betwwn -180 and 180 degress *
+		/* azimuthNormalized is between -180 and 180 degress plus 180 Eppley offset *
 		 * [-180,0] -> Morning *
 		 * [0,+180] -> Afternoon */
 		double azimuthNormalized;
@@ -110,8 +110,12 @@ private:
 		AFTER_SUNSET = -2
 	};
 
+	/* Eppley: 0.01875º / step (AZ)      *
+	 * 180º of resolution: 9600 pulses 	 */
+	const float PULSES_PER_STEP = 0.01875;
+
 	enum hardwareLimits {
-		AZ_MAX_PULSES = 950,
+		AZ_MAX_PULSES = 17000,
 		ZE_MAX_PULSES = 3200
 	};
 

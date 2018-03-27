@@ -7,7 +7,7 @@
 
 #include "GPS.h"
 
-#define DEBUG
+//#define DEBUG
 
 int GPS::ReadandParse(){
 	int ret;
@@ -126,8 +126,13 @@ int GPS::parseStringData(){
 			return GPS_NOT_READY;
 		}
 	}
-	else
+	else {
+
+		std::cerr <<  "ERRO: "  << gpsData << std::endl;
+
 		return GPS_FAILURE;
+
+	}
 
 	return GPS_SUCCESS;
 }
