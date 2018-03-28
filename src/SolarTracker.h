@@ -110,13 +110,13 @@ private:
 		AFTER_SUNSET = -2
 	};
 
-	/* Eppley: 0.01875º / step (AZ)      *
+	/* Eppley: 0.01875º / step (AZ and ZE)      *
 	 * 180º of resolution: 9600 pulses 	 */
 	const float PULSES_PER_STEP = 0.01875;
 
 	enum hardwareLimits {
 		AZ_MAX_PULSES = 17000,
-		ZE_MAX_PULSES = 3200
+		ZE_MAX_PULSES = 4600
 	};
 
 

@@ -35,7 +35,7 @@ void SolarTracker::GPSComThreadFunction(){
 	// double deltaAzimuth = 0;
 
 	/* Zenith angle between 0 a 180 degress */
-	double scaledZenith = 0;
+	//double scaledZenith = 0;
 
 	while (localCmd != SOLAR_EXIT){
 
@@ -84,8 +84,6 @@ void SolarTracker::GPSComThreadFunction(){
 		zenithk_1 = solarStatus.spa.zenith;
 		//deltaAzimuth = solarStatus.spa.azimuth - azimuthk_1;
 		//azimuthk_1 = solarStatus.spa.azimuth;
-
-		std::cout << "\t\t\tdeltaZenith: " << solarStatus.deltaZenith << std::endl;
 
 		/* Normalize angles: */
 		inputOutputMutex.lock();
@@ -218,6 +216,9 @@ void SolarTracker::azRepos(){
 	/* For Eppley */
 	int azimuthPulses = solarStatus.azimuthNormalized / PULSES_PER_STEP;
 
+	std::cout << "azimuthPulses: " << azimuthPulses << std::endl;
+
+
 	int azDeltaPulses = azimuthPulses - solarStatus.currentAzPulsePos;
 	int pulses;
 
@@ -295,8 +296,12 @@ void SolarTracker::azGoHome(){
 
 
 void SolarTracker::zeRepos(){
-
+	/* Lego Model
 	int zenithPulses = solarStatus.elevationNormalized * 320.0/18.0;
+	*/
+
+	int zenithPulses = solarStatus.elevationNormalized / PULSES_PER_STEP;
+
 	int zeDeltaPulses = zenithPulses - solarStatus.currentZePulsePos;
 	int pulses = abs(zeDeltaPulses);
 
@@ -361,16 +366,16 @@ int SolarTracker::checkSunRiseSunSet(){
 void SolarTracker::MagComThreadFunction(){
 
 	int localCmd = SOLAR_RUNNING;
-	float localLatitute, localLongitute, localElevaltion;
+//	float localLatitute, localLongitute, localElevaltion;
 
 	while ( localCmd != SOLAR_EXIT){
 
 		/* Read gloval values  */
 		inputOutputMutex.lock();
 		localCmd = solarStatus.cmd;
-		localLatitute = latitude;
-		localLongitute = longitude;
-		localElevaltion = elevation;
+//		localLatitute = latitude;
+//		localLongitute = longitude;
+//		localElevaltion = elevation;
 		inputOutputMutex.unlock();
 
 		magSensor->refresh();
@@ -597,7 +602,7 @@ void SolarTracker::getSolarNoonZeAngle(){
 	spa.month         = now->tm_mon + 1;
 	spa.day           = now->tm_mday;
 
-	spa.timezone      = -2.0;
+	spa.timezone      = -3.0;
 	spa.delta_ut1     = 0;
 	spa.delta_t       = 67;
 
@@ -660,11 +665,11 @@ void SolarTracker::SPACalculation(int mode){
 #endif
 
 	if (mode == GPS_ONLINE){
-		solarStatus.spa.hour          = serialGPS->get_hh() - 2;
+		solarStatus.spa.hour          = serialGPS->get_hh() - 3;
 		solarStatus.spa.minute        = serialGPS->get_mm();
 		solarStatus.spa.second        = serialGPS->get_ss();
 	}else {
-		solarStatus.spa.hour          = now->tm_hour - 2;
+		solarStatus.spa.hour          = now->tm_hour - 3;
 		solarStatus.spa.minute        = now->tm_min;
 		solarStatus.spa.second        = now->tm_sec;
 	}
@@ -778,7 +783,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
 	//MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
-	inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
+	//inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
 	mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
 	mqqtCommandsThread = new std::thread(&SolarTracker::mqttCommandsFunction, this);
 
@@ -842,11 +847,11 @@ void SolarTracker::readLocConfFile(){
 
 
 SolarTracker::~SolarTracker() {
-	inputOutputThread->join();
-	//gpsComThread->join();
+	//inputOutputThread->join();
+	gpsComThread->join();
 	//MagComThread->join();
-	//mqqtPublishThread->join();
-	//mqqtCommandsThread->join();
+	mqqtPublishThread->join();
+	mqqtCommandsThread->join();
 
 	/* Write last known location */
 	writeLocConfFile();
@@ -857,11 +862,11 @@ SolarTracker::~SolarTracker() {
 
 	myComm->disconnect();
 
-	delete inputOutputThread;
-	//delete gpsComThread;
-	delete MagComThread;
-	//delete mqqtPublishThread;
-	//delete mqqtCommandsThread;
+	//delete inputOutputThread;
+	delete gpsComThread;
+	//delete MagComThread;
+	delete mqqtPublishThread;
+	delete mqqtCommandsThread;
 
 	delete serialGPS;
 	delete magSensor;
