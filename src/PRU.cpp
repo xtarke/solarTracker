@@ -25,8 +25,10 @@
 #define PRU_NUM	0   // using PRU0
 // #define DEBUG
 
-PRU::PRU() {
+PRU::PRU(std::string configPath) {
 	int ret;
+
+	myconfigPath = configPath;
 
 	/* Initialize structure used by prussdrv_pruintc_intc
 	PRUSS_INTC_INITDATA is found in pruss_intc_mapping.h */
@@ -81,7 +83,10 @@ void PRU::goPos(enum servoID servo, enum direction dir, uint32_t pulses){
 		std::cerr << "prussdrv_pru_write_memory: " << ret << std::endl;;
 
 	// Load and execute the PRU program on the PRU
-	ret = prussdrv_exec_program (PRU_NUM, "./pulses.bin");
+
+	std::string fileName = myconfigPath + "/pulses.bin";
+
+	ret = prussdrv_exec_program (PRU_NUM, fileName.c_str());
 
 	if (ret < 0)
 		std::cerr << "prussdrv_exec_program: " << ret << std::endl;;

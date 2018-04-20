@@ -183,16 +183,20 @@ void SolarTracker::mqttPublishFunction(){
 		stringValue = std::to_string((int)(localStatus.spa.sunset)) + ":" + std::to_string((int)min) + ":" + std::to_string((int)sec);
 		myComm->publish(NULL, "solar/sunset", stringValue.length(), stringValue.c_str(), 0 , false);
 
-
 		/* Debug
 		 * publish each 5min*/
 		//if (i % 300 == 0) {
-			std::string time = std::to_string(localStatus.spa.hour) + ":" +  std::to_string(localStatus.spa.minute) + ":" +
-					std::to_string(localStatus.spa.second);
+			std::string date = std::to_string(solarStatus.spa.year) + ":" +
+					std::to_string(solarStatus.spa.month) + ":" +
+					std::to_string(solarStatus.spa.day);
+			std::string time = std::to_string(localStatus.spa.hour) + ":" +  std::to_string(localStatus.spa.minute);
 			stringValue = std::to_string(localStatus.spa.azimuth) +  "," + std::to_string(localStatus.spa.azimuth_astro) + ","
 					+ std::to_string(localStatus.spa.zenith) + "," +
 					std::to_string(localStatus.GPSstatus) + "," + time;
 			myComm->publish(NULL, "solar/debug", stringValue.length(), stringValue.c_str(), 0 , false);
+
+			myComm->publish(NULL, "solar/time", time.length(), time.c_str(), 0 , false);
+			myComm->publish(NULL, "solar/date", date.length(), date.c_str(), 0 , false);
 
 		//}
 		/* Publish ret */
@@ -742,6 +746,7 @@ void SolarTracker::SPACalculation(int mode){
 
 SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 
+	int ret;
 	solarStatus.cmd = SOLAR_MANUAL;
 	solarStatus.GPSstatus = GPS::GPS_NOT_READY;
 
@@ -755,7 +760,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 	solarStatus.currentAzPulsePos = 0;
 	solarStatus.azimuthNormalized = 0;
 
-	realTimeHardware = new PRU();
+	realTimeHardware = new PRU(myconfigPath);
 	serialGPS = new GPS(GPSdevFilename);
 
 	myComm = new MqttComm("soltTracker", "localhost", 1883);
@@ -767,7 +772,6 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 
 	if (!confFileIn.is_open()){
 		std::cerr << "Location file missing, generating... " << std::endl;
-		int ret;
 
 		/* Get location */
 		do ret = serialGPS->ReadandParse(); while (ret != 0);
@@ -779,6 +783,19 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 		}
 	}else
 		readLocConfFile();
+
+	/* disable NTP */
+	system("timedatectl set-ntp 0");
+
+	/* Configure system time */
+	do ret = serialGPS->ReadandParse(); while (ret != 0);
+
+	std::string time = "timedatectl set-time " + std::string(std::to_string((int)serialGPS->get_hh())) + ":" +
+			std::string(std::to_string((int)serialGPS->get_mm())) + ":" +
+			std::string(std::to_string((int)serialGPS->get_ss()));
+
+	std::cout << "Configure time: " << time << std::endl;
+	system(time.c_str());
 
 	/* After gps is online */
 	// magSensor = new Magnetometer(latitude, longitude, elevation);
@@ -827,7 +844,8 @@ int SolarTracker::writeLocConfFile(){
 void SolarTracker::readLocConfFile(){
 
 	std::string line;
-	std::ifstream confFileIn ("loc.conf");
+	std::string confFile = myconfigPath + "/loc.conf";
+	std::ifstream confFileIn (confFile);
 	std::vector<std::string> tokens;
 
 	if (!confFileIn.is_open()){
@@ -874,7 +892,7 @@ SolarTracker::~SolarTracker() {
 	delete mqqtCommandsThread;
 
 	delete serialGPS;
-	delete magSensor;
+	// delete magSensor;
 	delete myComm;
 	delete realTimeHardware;
 

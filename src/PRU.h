@@ -10,12 +10,13 @@
 
 #include <prussdrv.h>
 #include <stdint.h>
-
+#include <string>
 
 class PRU {
 private:
 	tpruss_intc_initdata pruss_intc_initdata;
 
+	std::string myconfigPath;
 	void *pru0DataMemory;
 	unsigned int *pru0DataMemory_int;
 
@@ -29,7 +30,7 @@ private:
 
 
 public:
-	PRU();
+	PRU(std::string configPath);
 	virtual ~PRU();
 
 	enum servoID {ZENITH_SERVO, AZIMUTH_SERVO};

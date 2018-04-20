@@ -116,11 +116,11 @@ int GPS::parseStringData(){
 			numericalGpsData.satellites = std::stoi(dataParts[7]);
 			numericalGpsData.hdop = std::stof(dataParts[8]);
 
-			numericalGpsData.mslAltitue = std::stof(dataParts[9]);
+			/* numericalGpsData.mslAltitue = std::stof(dataParts[9]);
 			numericalGpsData.altitudeUnit = dataParts[10][0];
 
 			numericalGpsData.geoSep = std::stof(dataParts[11]);
-			numericalGpsData.geoSepUnit = dataParts[12][0];
+			numericalGpsData.geoSepUnit = dataParts[12][0];*/
 		}catch(const std::exception& e){
 			std::cerr << "Gps not yet Ready\n";
 			return GPS_NOT_READY;
