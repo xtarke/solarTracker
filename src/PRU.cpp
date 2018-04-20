@@ -23,7 +23,7 @@
 #include <iostream>
 
 #define PRU_NUM	0   // using PRU0
-#define DEBUG
+// #define DEBUG
 
 PRU::PRU() {
 	int ret;
