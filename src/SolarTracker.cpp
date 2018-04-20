@@ -735,10 +735,12 @@ void SolarTracker::SPACalculation(int mode){
 }
 
 
-SolarTracker::SolarTracker(const char* GPSdevFilename) {
+SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 
 	solarStatus.cmd = SOLAR_MANUAL;
 	solarStatus.GPSstatus = GPS::GPS_NOT_READY;
+
+	myconfigPath = configPath;
 
 	/* Zenith pos */
 	solarStatus.currentZePulsePos = 0;
@@ -753,8 +755,10 @@ SolarTracker::SolarTracker(const char* GPSdevFilename) {
 
 	myComm = new MqttComm("soltTracker", "localhost", 1883);
 
+	std::string confFile = configPath + "/loc.conf";
+
 	/* Check existence of loc.conf */
-	std::ifstream confFileIn ("loc.conf");
+	std::ifstream confFileIn (confFile);
 
 	if (!confFileIn.is_open()){
 		std::cerr << "Location file missing, generating... " << std::endl;
@@ -792,7 +796,8 @@ int SolarTracker::writeLocConfFile(){
 
 	if (ret == 0) {
 
-		std::ofstream confFileOut ("loc.conf");
+		std::string confFile = myconfigPath + "/loc.conf";
+		std::ofstream confFileOut (confFile);
 
 		if (confFileOut.is_open()){
 			confFileOut << std::fixed << std::setprecision(6);

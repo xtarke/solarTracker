@@ -17,6 +17,7 @@
 
 #include <thread>
 #include <mutex>
+#include <string>
 
 class SolarTracker {
 
@@ -27,6 +28,8 @@ private:
 	MqttComm *myComm;
 
 	PRU *realTimeHardware;
+
+	std::string myconfigPath;
 
 	/* Threads */
 	std::thread *gpsComThread;
@@ -137,7 +140,7 @@ private:
 	}
 
 public:
-	SolarTracker(const char* GPSdevFilename);
+	SolarTracker(const char* GPSdevFilename,  std::string configPath);
 	virtual ~SolarTracker();
 };
 

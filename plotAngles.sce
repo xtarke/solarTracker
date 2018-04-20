@@ -13,9 +13,11 @@ for (i=1:1:dataSize(1))
 end
 temp(:,1) = -temp(:,1)
 
-//pulsesA = 320/180*(90 - temp(:,2))
-pulsesA =  90 - temp(:,2)
-
+/* Eppley *
+-120 to 120 degress: literature
+Eppley rotates only clockwise 
+0.01975 degress per step      */
+pulsesA = (temp(:,1) + 180) 
 
 
 // 3d graph
@@ -24,7 +26,7 @@ y = cosd(temp(:,1));
 z = sind(90 - temp(:,2));
 
 a = gca()
-//a.rotation_angles=[65,75];
+a.rotation_angles=[65,75];
 a.data_bounds=[-1,-1,0;1,1,1]; //boundaries given by data_bounds
 a.thickness = 2;
 param3d1(x,y,z);
