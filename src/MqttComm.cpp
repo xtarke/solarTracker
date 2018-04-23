@@ -39,7 +39,7 @@ MqttComm::~MqttComm() {
 void MqttComm::on_connect(int rc)
 {
 	int ret;
-	std::cout << "Connected with code %d. \n";
+	std::cout << "Connected with code" << rc << std::endl;
 
 	if (rc == 0) {
 		ret = subscribe(NULL, topics[0].c_str());

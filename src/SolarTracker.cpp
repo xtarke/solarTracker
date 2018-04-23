@@ -39,6 +39,8 @@ void SolarTracker::GPSComThreadFunction(){
 
 	while (localCmd != SOLAR_EXIT){
 
+		std::cout << "Running." << std::endl;
+
 		/* Read exit command */
 		inputOutputMutex.lock();
 		localCmd = solarStatus.cmd;
@@ -219,14 +221,13 @@ void SolarTracker::azRepos(){
 	//int azimuthPulses = solarStatus.azimuthNormalized * 900.0/180.0;
 	/* For Eppley */
 	int azimuthPulses = solarStatus.azimuthNormalized / PULSES_PER_STEP;
-
-	std::cout << "azimuthPulses: " << azimuthPulses << std::endl;
-
-
 	int azDeltaPulses = azimuthPulses - solarStatus.currentAzPulsePos;
 	int pulses;
 
+#ifdef DEBUG
+	std::cout << "azimuthPulses: " << azimuthPulses << std::endl;
 	std::cout << "\tazDeltaPulses: "  << azDeltaPulses << std::endl;
+#endif
 
 	/* Morning: go east */
 	if (azDeltaPulses < 0){
@@ -234,18 +235,16 @@ void SolarTracker::azRepos(){
 		pulses = abs(azDeltaPulses);
 
 		if ((solarStatus.currentAzPulsePos > -AZ_MAX_PULSES) && (pulses > 0)) {
-
-
-			std::cout << "Going east: " << pulses << std::endl;
-
-
 			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
 
 			inputOutputMutex.lock();
 			solarStatus.currentAzPulsePos = azimuthPulses;
 			inputOutputMutex.unlock();
 
+#ifdef DEBUG
+			std::cout << "Going east: " << pulses << std::endl;
 			std::cout << "\tcurrentAzPulsePos: " << solarStatus.currentAzPulsePos << std::endl;
+#endif
 		}
 	}
 
@@ -255,16 +254,16 @@ void SolarTracker::azRepos(){
 		pulses = abs(azDeltaPulses);
 
 		if ((solarStatus.currentAzPulsePos < AZ_MAX_PULSES) && (pulses > 0)){
-
-			std::cout << "Going west: " << pulses << std::endl;
-
 			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
 
 			inputOutputMutex.lock();
 			solarStatus.currentAzPulsePos = azimuthPulses;
 			inputOutputMutex.unlock();
 
+#ifdef DEBUG
+			std::cout << "Going west: " << pulses << std::endl;
 			std::cout << "\tcurrentAzPulsePos: " << solarStatus.currentAzPulsePos << std::endl;
+#endif
 		}
 	}
 }
@@ -305,11 +304,12 @@ void SolarTracker::zeRepos(){
 	*/
 
 	int zenithPulses = solarStatus.elevationNormalized / PULSES_PER_STEP;
-
 	int zeDeltaPulses = zenithPulses - solarStatus.currentZePulsePos;
 	int pulses = abs(zeDeltaPulses);
 
+#ifdef DEBUG
 	std::cout << "\tzeDeltaPulses: "  << zeDeltaPulses << std::endl;
+#endif
 
 	/* Do for delta pulses */
 	if ((solarStatus.currentZePulsePos <= ZE_MAX_PULSES) && (solarStatus.currentZePulsePos >= 0) && (pulses > 0)) {
@@ -328,7 +328,7 @@ void SolarTracker::zeRepos(){
 
 void SolarTracker::zeGoHome(){
 
-	if ((solarStatus.currentZePulsePos <= 3200) && (solarStatus.currentZePulsePos > 0)){
+	if ((solarStatus.currentZePulsePos <= ZE_MAX_PULSES) && (solarStatus.currentZePulsePos > 0)){
 		std::cout << "\tReturning: " << solarStatus.currentZePulsePos << "pulses" << std::endl;
 		realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, solarStatus.currentZePulsePos);
 
@@ -368,18 +368,13 @@ int SolarTracker::checkSunRiseSunSet(){
 
 
 void SolarTracker::MagComThreadFunction(){
-
 	int localCmd = SOLAR_RUNNING;
-//	float localLatitute, localLongitute, localElevaltion;
 
 	while ( localCmd != SOLAR_EXIT){
 
-		/* Read gloval values  */
+		/* Read global values  */
 		inputOutputMutex.lock();
 		localCmd = solarStatus.cmd;
-//		localLatitute = latitude;
-//		localLongitute = longitude;
-//		localElevaltion = elevation;
 		inputOutputMutex.unlock();
 
 		magSensor->refresh();
@@ -419,11 +414,20 @@ void SolarTracker::mqttCommandsFunction(){
 	while (localCmd != SOLAR_EXIT){
 
 		if (!myComm->queueCmdIsEmpty()) {
+
 			mycmd = myComm->deQueueCmd();
 
 			inputOutputMutex.lock();
 			solarStatus.cmd = mycmd;
 			inputOutputMutex.unlock();
+
+			if (mycmd == SOLAR_MANUAL){
+				zeGoHome();
+				azGoHome();
+
+				std::cout << "Done..." << std::endl;
+			}
+
 		}
 
 		if (!myComm->queueAzIsEmpty() ) {
@@ -789,10 +793,17 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 
 	/* Configure system time */
 	do ret = serialGPS->ReadandParse(); while (ret != 0);
+	/* Get time */
+	serialGPS->updateDate();
 
-	std::string time = "timedatectl set-time " + std::string(std::to_string((int)serialGPS->get_hh())) + ":" +
-			std::string(std::to_string((int)serialGPS->get_mm())) + ":" +
-			std::string(std::to_string((int)serialGPS->get_ss()));
+	/*  timedatectl set-time "yyyy-MM-dd hh:mm:ss" */
+
+	std::string time = "timedatectl set-time \"" + std::to_string((int)serialGPS->get_year()) + "-" +
+			std::to_string((int)serialGPS->get_month()) + "-" +
+			std::to_string((int)serialGPS->get_day()) + " " +
+			std::to_string((int)serialGPS->get_hh()) + ":" +
+			std::to_string((int)serialGPS->get_mm()) + ":" +
+			std::to_string((int)serialGPS->get_ss()) + "\"";
 
 	std::cout << "Configure time: " << time << std::endl;
 	system(time.c_str());

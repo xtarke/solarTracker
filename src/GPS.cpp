@@ -19,6 +19,15 @@ int GPS::ReadandParse(){
 	return ret;
 }
 
+int GPS::updateDate(){
+	int ret;
+
+	gpsCom->readData(gpsData);
+	ret = parseStringDateData();
+	gpsData.clear();
+
+	return ret;
+}
 
 int GPS::parseStringData(){
 
@@ -116,6 +125,9 @@ int GPS::parseStringData(){
 			numericalGpsData.satellites = std::stoi(dataParts[7]);
 			numericalGpsData.hdop = std::stof(dataParts[8]);
 
+			if (numericalGpsData.satellites == 0)
+				return GPS_NOT_READY;
+
 			/* numericalGpsData.mslAltitue = std::stof(dataParts[9]);
 			numericalGpsData.altitudeUnit = dataParts[10][0];
 
@@ -135,6 +147,42 @@ int GPS::parseStringData(){
 	}
 
 	return GPS_SUCCESS;
+}
+
+int GPS::parseStringDateData(){
+
+	std::vector<std::string> dataParts;
+	std::string::size_type frameInit, frameSize;
+
+	frameInit = gpsData.rfind("$GPRMC");
+
+	if (frameInit != std::string::npos){
+		frameSize = gpsData.substr(frameInit).find('\n');
+
+		std::string gpsPosData = gpsData.substr(frameInit,frameSize);
+		split( dataParts, gpsPosData, "," );
+
+		try {
+			numericalGpsData.day = std::stoi(dataParts[9].substr(0,2));
+			numericalGpsData.month = std::stoi(dataParts[9].substr(2,2));
+			numericalGpsData.year = std::stoi(dataParts[9].substr(4,6)) + 2000;
+		}catch(const std::exception& e){
+			std::cerr << "Gps not yet Ready\n";
+			return GPS_NOT_READY;
+		}
+
+#ifdef DEBUG
+		std::cout << (int)numericalGpsData.day << ":" << (int)numericalGpsData.month << ":" <<
+				(int)numericalGpsData.year << std::endl;
+
+#endif
+	}
+	else
+		return GPS_FAILURE;
+
+
+	return GPS_FAILURE;
+
 }
 
 void GPS::printNumericalData()

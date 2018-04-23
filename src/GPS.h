@@ -27,11 +27,17 @@ public:
 	virtual ~GPS();
 
 	int ReadandParse();
+	int updateDate();
+
 	void printNumericalData();
 
 	uint8_t get_hh() {return numericalGpsData.hh;}
 	uint8_t get_mm() {return numericalGpsData.mm;}
 	uint8_t get_ss() {return numericalGpsData.ss;}
+
+	uint8_t get_day() {return numericalGpsData.day;}
+	uint8_t get_month() {return numericalGpsData.month;}
+	uint16_t get_year() {return numericalGpsData.year;}
 
 	float get_latitue() { return (numericalGpsData.hemisphere == 'N') ?
 			numericalGpsData.latitute : -(numericalGpsData.latitute);  }
@@ -57,6 +63,7 @@ private:
 
 	/* Parser functions */
 	int parseStringData();
+	int parseStringDateData();
 
 	struct split {
 		enum empties_t { empties_ok, no_empties };
@@ -89,11 +96,17 @@ private:
 	}
 
 	struct GGADataFormat{
-		/* UTC Position */
+		/* UTC Time */
 		uint8_t hh;
 		uint8_t mm;
 		uint8_t ss;
 
+		/* UTC Date */
+		uint8_t day;
+		uint8_t month;
+		uint16_t year;
+
+		/* UTC Posistion */
 		float latitute;
 		char hemisphere;	/* North or South */
 		float longitute;
