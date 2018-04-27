@@ -39,8 +39,6 @@ void SolarTracker::GPSComThreadFunction(){
 
 	while (localCmd != SOLAR_EXIT){
 
-		std::cout << "Running." << std::endl;
-
 		/* Read exit command */
 		inputOutputMutex.lock();
 		localCmd = solarStatus.cmd;
@@ -247,7 +245,10 @@ void SolarTracker::azRepos(){
 		pulses = abs(azDeltaPulses);
 
 		if ((solarStatus.currentAzPulsePos > -AZ_MAX_PULSES) && (pulses > 0)) {
-			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
+//			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
+
+			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+
 
 			inputOutputMutex.lock();
 			solarStatus.currentAzPulsePos = azimuthPulses;
@@ -266,7 +267,7 @@ void SolarTracker::azRepos(){
 		pulses = abs(azDeltaPulses);
 
 		if ((solarStatus.currentAzPulsePos < AZ_MAX_PULSES) && (pulses > 0)){
-			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+			realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
 
 			inputOutputMutex.lock();
 			solarStatus.currentAzPulsePos = azimuthPulses;
@@ -288,7 +289,7 @@ void SolarTracker::azGoHome(){
 	if ((solarStatus.currentAzPulsePos < 0) && (pulses < AZ_MAX_PULSES) ){
 
 		std::cout << "\tReturning: " << pulses << "pulses" << std::endl;
-		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
 
 		/* Store current position */
 		inputOutputMutex.lock();
@@ -300,7 +301,7 @@ void SolarTracker::azGoHome(){
 	if ((solarStatus.currentAzPulsePos > 0) && (pulses < AZ_MAX_PULSES)) {
 		std::cout << "\tReturning: " << pulses << "pulses" << std::endl;
 
-		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, pulses);
+		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
 
 		/* Store current position */
 		inputOutputMutex.lock();
