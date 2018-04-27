@@ -73,6 +73,8 @@ private:
 		spa_data spa;
 		int GPSstatus;
 
+		bool goHome;
+
 		/* Zenith position */
 		int currentZePulsePos;
 		/* elevationNormalized is between 0 and 180 degress *

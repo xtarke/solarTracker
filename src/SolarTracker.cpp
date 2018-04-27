@@ -23,7 +23,7 @@
 
 void SolarTracker::GPSComThreadFunction(){
 
-	int ret, localCmd = SOLAR_RUNNING;
+	int ret, goHome = false, localCmd = SOLAR_RUNNING;
 
 	/* Previous calculated zenith angle            *
 	 * Used to calculate delta between            *
@@ -44,6 +44,7 @@ void SolarTracker::GPSComThreadFunction(){
 		/* Read exit command */
 		inputOutputMutex.lock();
 		localCmd = solarStatus.cmd;
+		goHome = solarStatus.goHome;
 		inputOutputMutex.unlock();
 
 		ret = serialGPS->ReadandParse();
@@ -114,6 +115,17 @@ void SolarTracker::GPSComThreadFunction(){
 		solarStatus.elevationNormalized = 90 - scaledZenith;*/
 
 		inputOutputMutex.unlock();
+
+
+		if (goHome == true && localCmd == SOLAR_MANUAL) {
+			inputOutputMutex.lock();
+			solarStatus.goHome = false;
+			inputOutputMutex.unlock();
+
+			zeGoHome();
+			azGoHome();
+			continue;
+		}
 
 		/* Do not update if it is in manual or exiting*/
 		if (localCmd != SOLAR_RUNNING)
@@ -419,14 +431,11 @@ void SolarTracker::mqttCommandsFunction(){
 
 			inputOutputMutex.lock();
 			solarStatus.cmd = mycmd;
+
+			if (mycmd == SOLAR_MANUAL)
+				solarStatus.goHome = true;
+
 			inputOutputMutex.unlock();
-
-			if (mycmd == SOLAR_MANUAL){
-				zeGoHome();
-				azGoHome();
-
-				std::cout << "Done..." << std::endl;
-			}
 
 		}
 
@@ -688,7 +697,7 @@ void SolarTracker::SPACalculation(int mode){
 	std::cout << "second: " << spa.second << std::endl;
 #endif
 
-	solarStatus.spa.timezone      = -2.0;
+	solarStatus.spa.timezone      = -3.0;
 	solarStatus.spa.delta_ut1     = 0;
 	solarStatus.spa.delta_t       = 67;
 
@@ -752,6 +761,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 
 	int ret;
 	solarStatus.cmd = SOLAR_MANUAL;
+	solarStatus.goHome = false;
 	solarStatus.GPSstatus = GPS::GPS_NOT_READY;
 
 	myconfigPath = configPath;
