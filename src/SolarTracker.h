@@ -53,7 +53,8 @@ private:
 	enum solar_cmds {
 		SOLAR_RUNNING = 0,
 		SOLAR_MANUAL = 1,
-		SOLAR_EXIT = 2
+		SOLAR_EXIT = 2,
+		SOLAR_CALIB = 3
 	};
 
 	enum spa_mode{

@@ -779,6 +779,7 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 	serialGPS = new GPS(GPSdevFilename);
 
 	myComm = new MqttComm("soltTracker", "localhost", 1883);
+	mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
 
 	std::string confFile = configPath + "/loc.conf";
 
@@ -820,14 +821,13 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 	system(time.c_str());
 
 	/* After gps is online */
-	// magSensor = new Magnetometer(latitude, longitude, elevation);
 
-	//getSolarNoonZeAngle();
+	//Todo: magSensor = new Magnetometer(latitude, longitude, elevation);
+	//Todo: getSolarNoonZeAngle();
 
 	gpsComThread = new std::thread(&SolarTracker::GPSComThreadFunction, this);
-	//MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
-	//inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
-	mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
+	//Todo: MagComThread = new std::thread(&SolarTracker::MagComThreadFunction, this);
+	//Todo: inputOutputThread = new std::thread(&SolarTracker::inputOutputFunction, this);
 	mqqtCommandsThread = new std::thread(&SolarTracker::mqttCommandsFunction, this);
 
 }
