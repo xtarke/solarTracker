@@ -459,13 +459,13 @@ void SolarTracker::mqttCommandsFunction(){
 
 		if (!myComm->queueZeHomeIsEmpty() ) {
 			mycmd = myComm->deQueueZeHome();
-			if (localCmd == SOLAR_MANUAL)
+			if (localCmd == SOLAR_MANUAL || localCmd == SOLAR_CALIB)
 					zeSetHomePos(mycmd);
 		}
 
 		if (!myComm->queueAzHomeIsEmpty() ) {
 			mycmd = myComm->deQueueAzHome();
-			if (localCmd == SOLAR_MANUAL)
+			if (localCmd == SOLAR_MANUAL || localCmd == SOLAR_CALIB)
 				azSetHomePos(mycmd);
 		}
 
