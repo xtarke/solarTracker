@@ -16,8 +16,10 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
 - Commands (to publish):
     - "solar/cmd": changes application mode
         - "0" -> Solar tracker activated
-        - "0" -> Manual
+        - "1" -> Manual
         - "2" -> Turn off system. Azimuth and Zenith axis go to "home position"
+        - "3" -> Calibration mode. 
+        
 
     - "solar/cmd/azrepos": reposition of Azimuth axis in pulses. Hardware max/min angles are proteced
         - Value lower than zero rotates clockwise
@@ -43,7 +45,7 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
     - "solar/gps/status": current GPS status (updated updated every 1 second)
     - "solar/az": current SPA Azimuth angle (updated updated every 1 second)
     - "solar/ze": current SPA Zenith angle (updated updated every 1 second)
-    - "solar/gps/longitude": currrent GPS longiute (degress) (updated updated every 1 second)
+    - "solar/gps/longitude": current GPS longiute (degress) (updated updated every 1 second)
     - "solar/gps/latitude": current GPS latitute (degress) (updated updated every 1 second)
     - "solar/gps/elevation": current GPS elevation (m) (updated updated every 1 second)
     - "solar/debug": CSV format az,ze,gps status, current time ((updated updated every 5 minutes)

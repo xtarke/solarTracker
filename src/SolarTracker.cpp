@@ -52,6 +52,7 @@ void SolarTracker::GPSComThreadFunction(){
 
 			inputOutputMutex.lock();
 			SPACalculation(GPS_ONLINE);
+
 			solarStatus.GPSstatus = GPS::GPS_SUCCESS;
 
 			/* Update location */
@@ -212,8 +213,8 @@ void SolarTracker::mqttPublishFunction(){
 
 		//}
 		/* Publish ret */
-		stringValue = std::to_string(localStatus.azimuthNormalized) + " " + std::to_string(localStatus.elevationNormalized) + " " +
-				std::to_string(localStatus.deltaZenith) + " " + std::to_string(localStatus.currentZePulsePos) + " " +
+		stringValue = std::to_string(localStatus.azimuthNormalized) + " " + std::to_string(localStatus.elevationNormalized)
+				+ " " + std::to_string(localStatus.currentZePulsePos) + " " +
 				std::to_string(localStatus.currentAzPulsePos);
 		myComm->publish(NULL, "solar/norm", stringValue.length(), stringValue.c_str(), 0 , false);
 
@@ -321,16 +322,20 @@ void SolarTracker::zeRepos(){
 	int pulses = abs(zeDeltaPulses);
 
 #ifdef DEBUG
-	std::cout << "\tzeDeltaPulses: "  << zeDeltaPulses << std::endl;
+	std::cout << "\tzenithPulses: "  << zenithPulses << std::endl;
 #endif
 
 	/* Do for delta pulses */
 	if ((solarStatus.currentZePulsePos <= ZE_MAX_PULSES) && (solarStatus.currentZePulsePos >= 0) && (pulses > 0)) {
 
-		if (zeDeltaPulses > 0)
-			realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
-		else
-			realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, pulses);
+		if (zenithPulses < 0)
+				zenithPulses = 0;
+		else {
+			if (zeDeltaPulses > 0)
+				realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, pulses);
+			else
+				realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, pulses);
+		}
 
 		/* Store current position */
 		inputOutputMutex.lock();
