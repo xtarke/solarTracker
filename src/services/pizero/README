@@ -1,0 +1,11 @@
+Edit wap_supplicant.conf e copy to /boot
+Create ssh.txt in /boot
+
+Use Android FING APP to discover Raspberry IP address
+
+- Upgrade
+- Activate camera (rasp-config)
+- clone https://github.com/silvanmelchior/RPi_Cam_Web_Interface
+    ./install.sh
+    xCam subFolder: camera
+    xjpglink: yes

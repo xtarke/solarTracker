@@ -26,11 +26,11 @@ import time
 
 broker_address="localhost" 
 client = mqtt.Client("P1") #create new instance
-client.connect(broker_address) #connect to broker
+# client.connect(broker_address) #connect to broker
 
 # Create a VideoCapture object and read from input file
 # If the input is the camera, pass 0 instead of the video file name
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(2)
 # 
 ## Check if camera opened successfully
 if (cap.isOpened()== False): 
