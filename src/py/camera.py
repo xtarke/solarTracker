@@ -21,11 +21,16 @@
 
 import cv2
 # import numpy as np
-import paho.mqtt.client as mqtt
+# import paho.mqtt.client as mqtt
 import time
 
+<<<<<<< HEAD
 broker_address="localhost" 
 client = mqtt.Client("P1") #create new instance
+=======
+# broker_address="localhost" 
+# client = mqtt.Client("P1") #create new instance
+>>>>>>> be0ea9d1ddd58cec4a96c18003de0bb4ef3113fb
 # client.connect(broker_address) #connect to broker
 
 # Create a VideoCapture object and read from input file
