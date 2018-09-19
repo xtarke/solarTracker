@@ -95,7 +95,6 @@ void SolarTracker::GPSComThreadFunction(){
 		/* Normaliza now for Eppley */
 		solarStatus.azimuthNormalized += 180;
 
-		//
 		//if (solarStatus.azimuthNormalized < 0)
 
 		/* Test Zenith derivative. If zero, does nothing */
@@ -427,7 +426,7 @@ void SolarTracker::inputOutputFunction(){
 
 void SolarTracker::mqttCommandsFunction(){
 
-	int localCmd = SOLAR_RUNNING, mycmd;
+	volatile int localCmd = SOLAR_RUNNING, mycmd;
 
 	while (localCmd != SOLAR_EXIT){
 
@@ -459,8 +458,15 @@ void SolarTracker::mqttCommandsFunction(){
 
 		if (!myComm->queueZeHomeIsEmpty() ) {
 			mycmd = myComm->deQueueZeHome();
-
-			std::cerr << "ZeHome (cmd) (value):  " << localCmd  <<  mycmd << std::endl;
+			
+			//TODO: Mutex?
+			std::cerr << solarStatus.spa.year << "-";
+			std::cerr << solarStatus.spa.month << "-";
+			std::cerr << solarStatus.spa.day << " ";
+			std::cerr << solarStatus.spa.hour << "-";
+			std::cerr << solarStatus.spa.minute << "-";
+			std::cerr << solarStatus.spa.second << " ";
+			std::cerr << "ZeHome (cmd) (value):  " << localCmd  << " / " <<  mycmd << std::endl;
 
 			if (localCmd == SOLAR_MANUAL || localCmd == SOLAR_CALIB)
 					zeSetHomePos(mycmd);
@@ -468,9 +474,17 @@ void SolarTracker::mqttCommandsFunction(){
 
 		if (!myComm->queueAzHomeIsEmpty() ) {
 
-			std::cerr << "ZeHome (cmd) (value):  " << localCmd  <<  mycmd << std::endl;
-
 			mycmd = myComm->deQueueAzHome();
+
+			//TODO: Mutex?
+			std::cerr << solarStatus.spa.year << "-";
+			std::cerr << solarStatus.spa.month << "-";
+			std::cerr << solarStatus.spa.day << " ";
+			std::cerr << solarStatus.spa.hour << "-";
+			std::cerr << solarStatus.spa.minute << "-";
+			std::cerr << solarStatus.spa.second << " ";
+			std::cerr << "AzHome (cmd) (value):  " << localCmd  <<  " / " << mycmd << std::endl;			
+	
 			if (localCmd == SOLAR_MANUAL || localCmd == SOLAR_CALIB)
 				azSetHomePos(mycmd);
 		}
@@ -489,11 +503,13 @@ void SolarTracker::zeSetHomePos(int pulses){
 
 	/* Negative value: go clockwise */
 	if (pulses < 0){
+		std::cerr << "\tZENITH_SERVO: " << pulses << std::endl;
 		realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::CLOCKWISE, abs(pulses));
 	}
 
 	/* Negative value: go clockwise */
 	if (pulses > 0){
+		std::cerr << "\tZENITH_SERVO: " << pulses << std::endl;
 		realTimeHardware->goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, abs(pulses));
 	}
 }
@@ -502,11 +518,13 @@ void SolarTracker::azSetHomePos(int pulses){
 
 	/* Negative value: go clockwise */
 	if (pulses < 0){
+		std::cerr << "\tAZIMUTH_SERVO: " << pulses << std::endl;
 		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::CLOCKWISE, abs(pulses));
 	}
 
 	/* Negative value: go clockwise */
 	if (pulses > 0){
+		std::cerr << "\tAZIMUTH_SERVO: " << pulses << std::endl;
 		realTimeHardware->goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, abs(pulses));
 	}
 }
@@ -763,9 +781,15 @@ void SolarTracker::SPACalculation(int mode){
 		printf("Sunset:        %02d:%02d:%02d Local Time\n", (int)(spa.sunset), (int)min, (int)sec);
 #endif
 
-	} else
+	} else {
+		std::cerr << solarStatus.spa.year << "-";
+		std::cerr << solarStatus.spa.month << "-";
+		std::cerr << solarStatus.spa.day << " ";
+		std::cerr << solarStatus.spa.hour << "-";
+		std::cerr << solarStatus.spa.minute << "-";
+		std::cerr << solarStatus.spa.second << " ";
 		std::cerr << "SPA Error Code: " << result << std::endl;
-
+	}	
 }
 
 
