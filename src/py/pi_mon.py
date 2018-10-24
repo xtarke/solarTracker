@@ -1,64 +1,62 @@
 import os
 import time
-import threading,functools
+from io import BytesIO
+#from PIL import Image
+import threading,functools,logging
 import datetime
 from picamera import PiCamera
 import paho.mqtt.client as mqtt
 
-
-cameraOn = False
-
+cameraOn = True
+timelapseOn = False
 
 class PeriodicTimer(object):
-    def __init__(self, interval, callback):
+    def __init__(self, interval, mqttClient):
         self.interval = interval
+        self.mqtt = mqttClient
 
-        @functools.wraps(callback)
-        def wrapper(*args, **kwargs):
-            result = callback(*args, **kwargs)
-            if result:
-                self.thread = threading.Timer(self.interval,
-                                              self.callback)
-                self.thread.start()
+    def foo(self):
+        temperature = self.measure_temp()
+        self.mqtt.publish("camera/temperatura", temperature)
 
-        self.callback = wrapper
+        self.thread = threading.Timer(self.interval, self.foo)
+        self.thread.start()
 
     def start(self):
-        self.thread = threading.Timer(self.interval, self.callback)
+        self.thread = threading.Timer(self.interval, self.foo)
         self.thread.start()
+
+    def measure_temp(self):
+        temp = os.popen("vcgencmd measure_temp").readline()
+        return (temp.replace("temp=","")).replace("'C","")
 
     def cancel(self):
         self.thread.cancel()
-
-
         
 def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection.")
 
-def measure_temp():
-    temp = os.popen("vcgencmd measure_temp").readline()
-    return (temp.replace("temp=",""))
 
 def on_message_print(client, userdata, message):
     global cameraOn
+    global timelapseOn
 
-    print("%s %s" % (message.topic, message.payload))
-    print("renan")
-    
-    if (message.payload == b'1'):
-        print("on");
-        #camera.start_preview()
-        cameraOn = True        
-    else:
-        print("off")
-        cameraOn = False
-        #camera.stop_preview()
+    print("%s %s" % (message.topic, message.payload))    
 
+    if (message.topic == 'camera/on'):    
+        if (message.payload == b'1'):        
+            cameraOn = True        
+        else:
+            cameraOn = False
 
-def foo():
-    print('Doing some work...')
-    return True
+    if (message.topic == 'camera/lapse'):
+        if (message.payload == b'1'):        
+            cameraOn = True
+            timelapseOn = True        
+        else:
+            timelapseOn = False
+        
 
 def main():
 
@@ -70,23 +68,59 @@ def main():
     mqttc.on_message = on_message_print
 
     mqttc.subscribe("camera/on")
+    mqttc.subscribe("camera/lapse")
 
-    timer = PeriodicTimer(1, foo)
-    timer.start()
+    temperatureTimer = PeriodicTimer(1, mqttc)
+    temperatureTimer.start()
 
+    camera = PiCamera()
+    camera.start_preview()
+
+    time.sleep(2)
+    #stream = BytesIO()
+
+    sleepCounter = 0
+    
     try:
         while True:
-            temperature = measure_temp()
-            mqttc.publish("camera/temperatura", temperature)
-            print(temperature)
-            time.sleep(2)
+
+            if (cameraOn == True):
+
+                if (camera.closed == True):
+                    camera = PiCamera()
+                    camera.start_preview()
+                    time.sleep(2)
                 
+                my_file = open('my_image.jpg', 'wb')                
+                camera.capture(my_file)           
+
+                my_file.close()
+                imageFile = open("my_image.jpg", "rb")
+
+                try:                
+                    data = imageFile.read()
+                    mqttc.publish("camera/image",data)                    
+            
+                finally:
+                    imageFile.close()
+
+                
+                
+                    
+            else:
+                camera.close()
+            
+
+            time.sleep(3)
+            sleepCounter = sleepCounter + 1
 
     except KeyboardInterrupt:
         print('Ending...')
         mqttc.disconnect()
 
-        timer.cancel()
+        camera.close()
+
+        temperatureTimer.cancel()
         
         
 
