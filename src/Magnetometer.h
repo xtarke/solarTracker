@@ -8,7 +8,7 @@
 #ifndef MAGNETOMETER_H_
 #define MAGNETOMETER_H_
 
-#include <GeographicLib/MagneticModel.hpp>
+//#include <GeographicLib/MagneticModel.hpp>
 #include "i2cmodule.h"
 
 class Magnetometer {

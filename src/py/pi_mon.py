@@ -1,20 +1,37 @@
 import os
 import time
-import threading
+import threading,functools
+import datetime
 from picamera import PiCamera
 import paho.mqtt.client as mqtt
 
 
 cameraOn = False
 
-camera = PiCamera(resolution=(800, 600))
 
-class MyThread(threading.Thread):
-    def run(self):
-        print("{} started!".format(self.getName()))              # "Thread-x started!"
-        time.sleep(1)                                      # Pretend to work for a second
-        print("{} finished!".format(self.getName()))             # "Thread-x finished!"
+class PeriodicTimer(object):
+    def __init__(self, interval, callback):
+        self.interval = interval
 
+        @functools.wraps(callback)
+        def wrapper(*args, **kwargs):
+            result = callback(*args, **kwargs)
+            if result:
+                self.thread = threading.Timer(self.interval,
+                                              self.callback)
+                self.thread.start()
+
+        self.callback = wrapper
+
+    def start(self):
+        self.thread = threading.Timer(self.interval, self.callback)
+        self.thread.start()
+
+    def cancel(self):
+        self.thread.cancel()
+
+
+        
 def on_disconnect(client, userdata, rc):
     if rc != 0:
         print("Unexpected disconnection.")
@@ -37,21 +54,25 @@ def on_message_print(client, userdata, message):
         print("off")
         cameraOn = False
         #camera.stop_preview()
-            
+
+
+def foo():
+    print('Doing some work...')
+    return True
 
 def main():
 
     mqttc = mqtt.Client()
 
-    mqttc.connect("192.168.0.10")
+    mqttc.connect("192.168.25.51")
     mqttc.loop_start()
     mqttc.on_disconnect = on_disconnect
     mqttc.on_message = on_message_print
 
     mqttc.subscribe("camera/on")
 
-    mythread = MyThread(name = "Camera_Thread")
-                           
+    timer = PeriodicTimer(1, foo)
+    timer.start()
 
     try:
         while True:
@@ -59,14 +80,14 @@ def main():
             mqttc.publish("camera/temperatura", temperature)
             print(temperature)
             time.sleep(2)
-
-            if (cameraOn == True):
-                mythread.start()
+                
 
     except KeyboardInterrupt:
         print('Ending...')
         mqttc.disconnect()
-        camera.close()
+
+        timer.cancel()
+        
         
 
 if __name__ == '__main__':

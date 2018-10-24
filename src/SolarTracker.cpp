@@ -394,7 +394,7 @@ void SolarTracker::MagComThreadFunction(){
 		localCmd = solarStatus.cmd;
 		inputOutputMutex.unlock();
 
-		magSensor->refresh();
+        //magSensor->refresh();
 
 		usleep(50000);
 	}
