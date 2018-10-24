@@ -1,7 +1,7 @@
+#!/usr/bin/env python3
+
 import os
 import time
-from io import BytesIO
-#from PIL import Image
 import threading,functools,logging
 import datetime
 from picamera import PiCamera
@@ -38,6 +38,13 @@ def on_disconnect(client, userdata, rc):
         print("Unexpected disconnection.")
 
 
+def createFolder(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print ('Error: Creating directory. ' + directory)
+
 def on_message_print(client, userdata, message):
     global cameraOn
     global timelapseOn
@@ -62,7 +69,7 @@ def main():
 
     mqttc = mqtt.Client()
 
-    mqttc.connect("192.168.25.51")
+    mqttc.connect("192.168.0.10")
     mqttc.loop_start()
     mqttc.on_disconnect = on_disconnect
     mqttc.on_message = on_message_print
@@ -78,6 +85,7 @@ def main():
 
     time.sleep(2)
     #stream = BytesIO()
+    createFolder('timelapse')
 
     sleepCounter = 0
     
@@ -104,8 +112,12 @@ def main():
                 finally:
                     imageFile.close()
 
-                
-                
+                if (sleepCounter == 20):
+                    if (timelapseOn == True):                
+                        lapseFilename = './timelapse/img_' + time.strftime("%Y%m%d-%H%M%S") + '.jpg'
+                        os.rename('./my_image.jpg', lapseFilename)
+                        print(lapseFilename)
+                        sleepCounter = 0
                     
             else:
                 camera.close()
