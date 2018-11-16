@@ -69,7 +69,7 @@ def main():
 
     mqttc = mqtt.Client()
 
-    mqttc.connect("192.168.0.10")
+    mqttc.connect("150.162.29.60")
     mqttc.loop_start()
     mqttc.on_disconnect = on_disconnect
     mqttc.on_message = on_message_print
@@ -81,6 +81,7 @@ def main():
     temperatureTimer.start()
 
     camera = PiCamera()
+    camera.rotation = 270
     camera.start_preview()
 
     time.sleep(2)
@@ -96,14 +97,15 @@ def main():
 
                 if (camera.closed == True):
                     camera = PiCamera()
+                    camera.rotation = 270
                     camera.start_preview()
                     time.sleep(2)
                 
-                my_file = open('my_image.jpg', 'wb')                
+                my_file = open('/home/pi/my_image.jpg', 'wb')                
                 camera.capture(my_file)           
 
                 my_file.close()
-                imageFile = open("my_image.jpg", "rb")
+                imageFile = open("/home/pi/my_image.jpg", "rb")
 
                 try:                
                     data = imageFile.read()
@@ -112,10 +114,11 @@ def main():
                 finally:
                     imageFile.close()
 
-                if (sleepCounter == 20):
+                if (sleepCounter == 10):
+                    # print('oi');
                     if (timelapseOn == True):                
-                        lapseFilename = './timelapse/img_' + time.strftime("%Y%m%d-%H%M%S") + '.jpg'
-                        os.rename('./my_image.jpg', lapseFilename)
+                        lapseFilename = '/home/pi/timelapse/img_' + time.strftime("%Y%m%d-%H%M%S") + '.jpg'
+                        os.rename('/home/pi/my_image.jpg', lapseFilename)
                         print(lapseFilename)
                         sleepCounter = 0
                     
