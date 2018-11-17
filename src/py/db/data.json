@@ -1,0 +1,13 @@
+ json_body = [
+    {
+        "measurement": "camera_temp",
+        "tags": {
+            "tracker": "ufsc",
+            "region": "florianopolis"
+        },
+        "time": "2018-21-10T23:00:00Z",
+        "fields": {
+            "value": 40
+        }
+    }
+]
