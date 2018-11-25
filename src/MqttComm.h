@@ -35,6 +35,7 @@ private:
 
 public:
 	MqttComm(const char *id, const char *host, int port);
+	MqttComm(const char *id, const char *host, int port, const char *user, const char *password);
 	~MqttComm();
 
 	int deQueueCmd();

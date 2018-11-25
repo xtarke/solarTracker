@@ -5,17 +5,17 @@
  *      Author: Renan Augusto Starke
  */
 
+#include <iostream>
 #include "MqttComm.h"
 
-#include <iostream>
-
-MqttComm::MqttComm(const char *id, const char *host, int port) {
+MqttComm::MqttComm(const char *id, const char *host, int port, const char *user, const char *password) {
 
 	int ret;
 	/* Initialize libmosquitto */
 	mosqpp::lib_init();
 
 	// threaded_set(true);
+	username_pw_set(user, password);
 
 	/* Connection to the broker */
 	int keepalive = 120;
@@ -26,7 +26,23 @@ MqttComm::MqttComm(const char *id, const char *host, int port) {
 	}
 
 	loop_start();
+}
 
+MqttComm::MqttComm(const char *id, const char *host, int port) {
+
+	int ret;
+	/* Initialize libmosquitto */
+	mosqpp::lib_init();
+
+	/* Connection to the broker */
+	int keepalive = 120;
+	ret = connect(host, port, keepalive);
+
+	if (ret != MOSQ_ERR_SUCCESS){
+		std::cerr << "Error connecting to mosquito broquer\n";
+	}
+
+	loop_start();
 }
 
 MqttComm::~MqttComm() {
@@ -39,7 +55,7 @@ MqttComm::~MqttComm() {
 void MqttComm::on_connect(int rc)
 {
 	int ret;
-	std::cout << "Connected with code" << rc << std::endl;
+	std::cout << "Connected with code " << rc << std::endl;
 
 	if (rc == 0) {
 		ret = subscribe(NULL, topics[0].c_str());

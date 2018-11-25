@@ -782,13 +782,15 @@ void SolarTracker::SPACalculation(int mode){
 #endif
 
 	} else {
-		std::cerr << solarStatus.spa.year << "-";
-		std::cerr << solarStatus.spa.month << "-";
-		std::cerr << solarStatus.spa.day << " ";
-		std::cerr << solarStatus.spa.hour << "-";
-		std::cerr << solarStatus.spa.minute << "-";
-		std::cerr << solarStatus.spa.second << " ";
-		std::cerr << "SPA Error Code: " << result << std::endl;
+		if (checkSunRiseSunSet()){
+			std::cerr << solarStatus.spa.year << "-";
+			std::cerr << solarStatus.spa.month << "-";
+			std::cerr << solarStatus.spa.day << " ";
+			std::cerr << solarStatus.spa.hour << "-";
+			std::cerr << solarStatus.spa.minute << "-";
+			std::cerr << solarStatus.spa.second << " ";
+			std::cerr << "SPA Error Code: " << result << std::endl;
+		}
 	}	
 }
 
@@ -813,7 +815,31 @@ SolarTracker::SolarTracker(const char* GPSdevFilename, std::string configPath) {
 	realTimeHardware = new PRU(myconfigPath);
 	serialGPS = new GPS(GPSdevFilename);
 
-	myComm = new MqttComm("soltTracker", "localhost", 1883);
+	std::string passFile = configPath + "/broker.conf";
+	std::vector<std::string> borkerConf;
+
+	/* Check existence of brokre.conf */
+	std::ifstream bokerFileIn (passFile);
+
+	if (!bokerFileIn.is_open()){
+		std::cerr << "Could not write loc.conf... Aborting" << std::endl;
+		exit(-1);
+
+	} else{
+		std::string line;
+		std::getline (bokerFileIn,line);
+
+		borkerConf = split(line,";");
+
+		if (borkerConf.size() < 3){
+				std::cerr << "Password file is invalid." << std::endl;
+				exit(-1);
+		}
+		bokerFileIn.close();
+	}
+
+	myComm = new MqttComm("solarTracker", borkerConf[0].c_str(), 1883,
+			borkerConf[1].c_str(), borkerConf[2].c_str());
 	mqqtPublishThread = new std::thread(&SolarTracker::mqttPublishFunction, this);
 
 	std::string confFile = configPath + "/loc.conf";
