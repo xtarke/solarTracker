@@ -6,9 +6,15 @@ import threading,functools,logging
 import datetime
 from picamera import PiCamera
 import paho.mqtt.client as mqtt
+import logging
+import argparse
 
-cameraOn = True
+logFilename = 'pi_mon-' + time.strftime('%Y%m%d-%H-%M-%S') + '.log'
+logging.basicConfig(filename=logFilename,level=logging.DEBUG)
+
+cameraOn = False
 timelapseOn = False
+temperature = 0
 
 class PeriodicTimer(object):
     def __init__(self, interval, mqttClient):
@@ -16,9 +22,9 @@ class PeriodicTimer(object):
         self.mqtt = mqttClient
 
     def foo(self):
+        global temperature
+        
         temperature = self.measure_temp()
-        self.mqtt.publish("camera/temperatura", temperature)
-
         self.thread = threading.Timer(self.interval, self.foo)
         self.thread.start()
 
@@ -35,9 +41,9 @@ class PeriodicTimer(object):
         
 def on_disconnect(client, userdata, rc):
     if rc != 0:
-        print("Unexpected disconnection.")
-
-
+        print('Unexpected disconnection: ' + str(rc))
+        logging.warning('Unexpected disconnection: ' + str(rc))
+        
 def createFolder(directory):
     try:
         if not os.path.exists(directory):
@@ -48,7 +54,8 @@ def createFolder(directory):
 def on_message_print(client, userdata, message):
     global cameraOn
     global timelapseOn
-
+    
+    logging.info('Connecting to {} with user {}.'.format(message.topic, message.payload))
     print("%s %s" % (message.topic, message.payload))    
 
     if (message.topic == 'camera/on'):    
@@ -66,10 +73,19 @@ def on_message_print(client, userdata, message):
         
 
 def main():
-
+    parser = argparse.ArgumentParser(description='Simple mqtt PiCamera Monitor')
+    parser.add_argument('broker', help='Broker address')
+    parser.add_argument('user', help='Broker user')
+    parser.add_argument('password', help='Broker password')
+    
+    options = parser.parse_args();
+    
+    print('Connecting to {} with user {}.'.format(options.broker, options.user))
+    logging.info('Connecting to {} with user {}.'.format(options.broker, options.user))
+        
     mqttc = mqtt.Client()
-
-    mqttc.connect("150.162.29.60")
+    mqttc.username_pw_set(options.user,  options.password)
+    mqttc.connect(options.broker)
     mqttc.loop_start()
     mqttc.on_disconnect = on_disconnect
     mqttc.on_message = on_message_print
@@ -107,15 +123,18 @@ def main():
                 my_file.close()
                 imageFile = open("/home/pi/my_image.jpg", "rb")
 
+                # print('oi')
+
                 try:                
                     data = imageFile.read()
-                    mqttc.publish("camera/image",data)                    
+                    mqttc.publish("camera/image",data)
+                    # print('caca')                 
             
                 finally:
                     imageFile.close()
 
                 if (sleepCounter == 10):
-                    # print('oi');
+                    print('camera');
                     if (timelapseOn == True):                
                         lapseFilename = '/home/pi/timelapse/img_' + time.strftime("%Y%m%d-%H%M%S") + '.jpg'
                         os.rename('/home/pi/my_image.jpg', lapseFilename)
@@ -124,7 +143,9 @@ def main():
                     
             else:
                 camera.close()
-            
+                    
+            # print('hello')
+            mqttc.publish("camera/temperatura", temperature)
 
             time.sleep(3)
             sleepCounter = sleepCounter + 1
