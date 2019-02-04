@@ -9,10 +9,10 @@ import paho.mqtt.client as mqtt
 import logging
 import argparse
 
-logFilename = 'pi_mon-' + time.strftime('%Y%m%d-%H-%M-%S') + '.log'
+logFilename = '/home/pi/pi_mon-' + time.strftime('%Y%m%d-%H-%M-%S') + '.log'
 logging.basicConfig(filename=logFilename,level=logging.DEBUG)
 
-cameraOn = False
+cameraOn = True
 timelapseOn = False
 temperature = 0
 
@@ -58,13 +58,13 @@ def on_message_print(client, userdata, message):
     logging.info('Connecting to {} with user {}.'.format(message.topic, message.payload))
     print("%s %s" % (message.topic, message.payload))    
 
-    if (message.topic == 'camera/on'):    
+    if (message.topic == 'camera2/on'):    
         if (message.payload == b'1'):        
             cameraOn = True        
         else:
             cameraOn = False
 
-    if (message.topic == 'camera/lapse'):
+    if (message.topic == 'camera2/lapse'):
         if (message.payload == b'1'):        
             cameraOn = True
             timelapseOn = True        
@@ -90,14 +90,15 @@ def main():
     mqttc.on_disconnect = on_disconnect
     mqttc.on_message = on_message_print
 
-    mqttc.subscribe("camera/on")
-    mqttc.subscribe("camera/lapse")
+    mqttc.subscribe("camera2/on")
+    mqttc.subscribe("camera2/lapse")
 
     temperatureTimer = PeriodicTimer(1, mqttc)
     temperatureTimer.start()
 
     camera = PiCamera()
-    camera.rotation = 270
+    camera.rotation = 0
+    camera.iso = 500
     camera.start_preview()
 
     time.sleep(2)
@@ -113,25 +114,27 @@ def main():
 
                 if (camera.closed == True):
                     camera = PiCamera()
-                    camera.rotation = 270
+                    camera.rotation = 0
+                    camera.iso = 500
                     camera.start_preview()
                     time.sleep(2)
                 
+                camera.annotate_text = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 my_file = open('/home/pi/my_image.jpg', 'wb')                
                 camera.capture(my_file)           
 
-                my_file.close()
-                imageFile = open("/home/pi/my_image.jpg", "rb")
+                # my_file.close()
+                # imageFile = open("/home/pi/my_image.jpg", "rb")
 
                 # print('oi')
 
-                try:                
-                    data = imageFile.read()
-                    mqttc.publish("camera/image",data)
+                #try:                
+                #    data = imageFile.read()
+                #    mqttc.publish("camera2/image",data)
                     # print('caca')                 
             
-                finally:
-                    imageFile.close()
+                #finally:
+                #    imageFile.close()
 
                 if (sleepCounter == 10):
                     print('camera');
@@ -145,7 +148,7 @@ def main():
                 camera.close()
                     
             # print('hello')
-            mqttc.publish("camera/temperatura", temperature)
+            mqttc.publish("camera2/temperatura", temperature)
 
             time.sleep(3)
             sleepCounter = sleepCounter + 1
