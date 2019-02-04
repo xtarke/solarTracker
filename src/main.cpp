@@ -44,14 +44,14 @@ int main(int argc, char *argv[]) {
 	parse_command_line(argc, argv);
 
 	SolarTracker solarTracaker("/dev/ttyS1", configPath);
-	//PRU hardware;
+	//PRU hardware(configPath);
 
 
-/*	for (int i=0; i < 60; i++) {
-		hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 1);
-		sleep(1);
+	//for (int i=0; i < 60; i++) {
+	//	hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 1);
+	//	sleep(1);
 
-	} */
+	//}
 	//hardware.goPos(PRU::ZENITH_SERVO, PRU::COUNTERCLOCKWISE, 500);
 	//sleep(1);
 	//hardware.goPos(PRU::AZIMUTH_SERVO, PRU::COUNTERCLOCKWISE, 500);

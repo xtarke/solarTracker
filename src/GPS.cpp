@@ -104,7 +104,7 @@ int GPS::parseStringData(){
 			minutes = std::stof(dataParts[4].substr(3,2));
 			fracMinutes = std::stof(dataParts[4].substr(5,3));
 		}catch(const std::exception& e){
-			std::cerr << "Gps not yet Ready\n";
+			std::cerr << "Gps error: degress/minutes/fracMinutes\n";
 			return GPS_NOT_READY;
 		}
 
@@ -125,8 +125,10 @@ int GPS::parseStringData(){
 			numericalGpsData.satellites = std::stoi(dataParts[7]);
 			numericalGpsData.hdop = std::stof(dataParts[8]);
 
-			if (numericalGpsData.satellites == 0)
+			if (numericalGpsData.satellites == 0){
+				std::cerr << "Gps error: no satellites\n";
 				return GPS_NOT_READY;
+			}
 
 			/* numericalGpsData.mslAltitue = std::stof(dataParts[9]);
 			numericalGpsData.altitudeUnit = dataParts[10][0];
@@ -134,7 +136,7 @@ int GPS::parseStringData(){
 			numericalGpsData.geoSep = std::stof(dataParts[11]);
 			numericalGpsData.geoSepUnit = dataParts[12][0];*/
 		}catch(const std::exception& e){
-			std::cerr << "Gps not yet Ready\n";
+			std::cerr << "Gps error: meridian/posFix/stallites/hdop\n";
 			return GPS_NOT_READY;
 		}
 	}

@@ -34,7 +34,7 @@ def on_message_print(client, userdata, message):
 def main():
     json_body = [
         {
-            "measurement": "camera_temp",
+            "measurement": "luz",
             "tags": {
                 "tracker": "home",
                 "region": "florianopolis"
@@ -69,8 +69,8 @@ def main():
     mqttc.subscribe("teste/luz")
     logging.info('Subscribing to: ' + 'teste/luz')
 
-    #client = InfluxDBClient(host='localhost', port=8086)
-    #client.switch_database('solartracker')
+    client = InfluxDBClient(host='localhost', port=8086)
+    client = InfluxDBClient('localhost', 8086, 'admin', options.password,'kairos')
        
     try:
         while True:
@@ -91,7 +91,7 @@ def main():
     except KeyboardInterrupt:
         print('Ending...')
         mqttc.disconnect()
-        # client.close()
+        client.close()
          
             
 if __name__ == '__main__':
