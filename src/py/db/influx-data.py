@@ -3,6 +3,7 @@
 from influxdb import InfluxDBClient
 import paho.mqtt.client as mqtt
 import time
+import datetime
 import logging
 import argparse
 import subprocess
@@ -11,17 +12,28 @@ import subprocess
 logFilename = '/home/starke/influxLight-' + time.strftime('%Y%m%d-%H-%M-%S') + '.log'
 logging.basicConfig(filename=logFilename,level=logging.DEBUG)
 temperature = '0'
+az = '0'
+ze = '0'
 
 
-def on_message_print(client, userdata, message):
+def on_message(client, userdata, message):
     global temperature
+    global az
+    global ze
  
     # print("%s %s" % (message.topic, message.payload))    
-    
-    temperature = str(float(message.payload))
-    # print(temperature)
 
+    if (message.topic == 'camera2/temperatura'):    
+        temperature = str(float(message.payload))
+        # print(temperature)
 
+    if (message.topic == 'solar/az'):
+        az = str(float(message.payload))
+        # print(az)
+
+    if (message.topic == 'solar/ze'):
+        ze = str(float(message.payload))
+        # print(ze)
 
 def on_connect(client, userdata, flags, rc):
     
@@ -70,33 +82,48 @@ def main():
  
     mqttc.loop_start()
     mqttc.on_disconnect = on_disconnect
-    mqttc.on_message = on_message_print
+    mqttc.on_message = on_message
     mqttc.on_connect = on_connect
 
     mqttc.subscribe("camera2/temperatura")
     logging.info('Subscribing to: ' + 'camera2/temperatura')
 
+    mqttc.subscribe("solar/ze")
+    logging.info('Subscribing to: ' + 'solar/ze')
+
+    mqttc.subscribe("solar/az")
+    logging.info('Subscribing to: ' + 'solar/az')
+
     #client = InfluxDBClient('localhost', 8086, options.DBuser, options.DBpassword)
     client = InfluxDBClient('localhost', 8086)
     client.switch_database('solartracker')
-       
-    
-    print('Hi')
 
     try:
         while True:
                  
             time.sleep(30)
+            json_body[0]['measurement'] = 'camera_temp'
             json_body[0]['fields']['Float_value'] = float(temperature)
             # json_body[0]['time'] = time.strftime('%Y-%m-%dT%H:%M:%S') + str(timezoneinfo) + ':00'
             
             print(json_body)
             client.write_points(json_body)
 
+            now = datetime.datetime.now().time()
+
+            # Record solar position between 6 and 20
+            if ((now > datetime.time(6,0,0)) & (now < datetime.time(20,0,0))):
+                json_body[0]['measurement'] = 'azimuth'
+                json_body[0]['fields']['Float_value'] = float(az)
+                client.write_points(json_body)
+
+                json_body[0]['measurement'] = 'zenith'
+                json_body[0]['fields']['Float_value'] = float(ze)
+                client.write_points(json_body)
+
            # scp pi@150.162.29.74:/home/pi/my_image.jpg /usr/share/grafana/public/img/my_image.jpg
             subprocess.run(['scp', 'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image.jpg'])
-
-            
+            # subprocess.run(['scp', '-P', ' 9000' ,'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image2.jpg'])
                
     except KeyboardInterrupt:
         print('Ending...')
