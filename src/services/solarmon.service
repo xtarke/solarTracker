@@ -1,0 +1,13 @@
+[Unit]
+Description=MQTT to influx gateway.
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /home/starke/influx.py <mqtt broker> <mqtt user> <mqtt password>
+#ExecStop=/bin/kill -9 $MAINPID
+#ExecReload=/bin/kill -HUP $MAINPID
+#KillMode=process
+User=starke
+
+[Install]
+WantedBy=multi-user.target

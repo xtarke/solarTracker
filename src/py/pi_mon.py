@@ -89,6 +89,7 @@ def main():
     mqttc.loop_start()
     mqttc.on_disconnect = on_disconnect
     mqttc.on_message = on_message_print
+    # mqttc.user_data_set(userdata)
 
     mqttc.subscribe("camera2/on")
     mqttc.subscribe("camera2/lapse")
@@ -136,7 +137,7 @@ def main():
                 #finally:
                 #    imageFile.close()
 
-                if (sleepCounter == 10):
+                if (sleepCounter > 10):
                     print('camera');
                     if (timelapseOn == True):                
                         lapseFilename = '/home/pi/timelapse/img_' + time.strftime("%Y%m%d-%H%M%S") + '.jpg'
