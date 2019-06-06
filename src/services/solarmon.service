@@ -1,13 +1,17 @@
+#copy to /etc/systemd/system/
+
 [Unit]
-Description=MQTT to influx gateway.
+Description=SolarTracker MQTT to influx gateway.
+After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /home/starke/influx.py <mqtt broker> <mqtt user> <mqtt password>
-#ExecStop=/bin/kill -9 $MAINPID
-#ExecReload=/bin/kill -HUP $MAINPID
-#KillMode=process
+ExecStart=/usr/bin/python3 -u /home/starke/DatabaseSolar/mqtt_influx.py <host> <user> <password>
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
 User=starke
 
 [Install]
 WantedBy=multi-user.target
+
