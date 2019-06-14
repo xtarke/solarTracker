@@ -23,7 +23,20 @@
 
 #include <linux/videodev2.h>
 
+#include <vector>
+
 #include "Camera.h"
+
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <cstdint>
+#include <memory>
+
+
+
+using namespace std;
 
 //https://gist.github.com/jayrambhia/5866483
 
@@ -139,7 +152,7 @@ int Camera::print_caps(int fd){
 	fmt.fmt.pix.height = 480;
 	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_BGR24;
 	//fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_GREY;
-	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
+	fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUV422M;
 	fmt.fmt.pix.field = V4L2_FIELD_NONE;
 
 	if (xioctl(fd, VIDIOC_S_FMT, &fmt) == -1)
@@ -240,13 +253,21 @@ int Camera::capture_image(int fd)
 	have to do is write it: */
 
     int jpgfile;
-    if((jpgfile = open("myimage.jpeg", O_WRONLY | O_CREAT, 0660)) < 0){
+    if((jpgfile = open("myimage.raw", O_WRONLY | O_CREAT, 0660)) < 0){
         perror("open");
         exit(1);
     }
 
     write(jpgfile, buffer, buf.length);
     close(jpgfile);
+
+    vector<uint8_t> output;
+    compressYUYVtoJPEG(buffer, 640, 480, output);
+
+    ofstream ofs("output.jpg", ios_base::binary);
+    ofs.write((const char*) &output[0], output.size());
+    ofs.close();
+
 
     return 0;
 }
@@ -259,4 +280,63 @@ int Camera::capture_image(int fd)
 void Camera::jpegWrite(unsigned char* img, char* jpegFilename)
 {
 
+}
+
+/**
+ * converts a YUYV raw buffer to a JPEG buffer.
+ * input is in YUYV (YUV 422). output is JPEG binary.
+ * from https://linuxtv.org/downloads/v4l-dvb-apis/V4L2-PIX-FMT-YUYV.html:
+ *      Each four bytes is two pixels.
+ *      Each four bytes is two Y's, a Cb and a Cr.
+ *      Each Y goes to one of the pixels, and the Cb and Cr belong to both pixels.
+ *
+ * inspired by: http://stackoverflow.com/questions/17029136/weird-image-while-trying-to-compress-yuv-image-to-jpeg-using-libjpeg
+ */
+void Camera::compressYUYVtoJPEG(uint8_t *input, const int width, const int height, std::vector<uint8_t>& output) {
+    struct jpeg_compress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    JSAMPROW row_ptr[1];
+    int row_stride;
+
+    uint8_t* outbuffer = NULL;
+    uint64_t outlen = 0;
+
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
+    jpeg_mem_dest(&cinfo, &outbuffer, &outlen);
+
+    // jrow is a libjpeg row of samples array of 1 row pointer
+    cinfo.image_width = width & -1;
+    cinfo.image_height = height & -1;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_YCbCr; //libJPEG expects YUV 3bytes, 24bit
+
+    jpeg_set_defaults(&cinfo);
+    jpeg_set_quality(&cinfo, 100, TRUE);
+    jpeg_start_compress(&cinfo, TRUE);
+
+    vector<uint8_t> tmprowbuf(width * 3);
+
+    JSAMPROW row_pointer[1];
+    row_pointer[0] = &tmprowbuf[0];
+    while (cinfo.next_scanline < cinfo.image_height) {
+        unsigned i, j;
+        unsigned offset = cinfo.next_scanline * cinfo.image_width * 2; //offset to the correct row
+        for (i = 0, j = 0; i < cinfo.image_width * 2; i += 4, j += 6) { //input strides by 4 bytes, output strides by 6 (2 pixels)
+            tmprowbuf[j + 0] = input[offset + i + 0]; // Y (unique to this pixel)
+            tmprowbuf[j + 1] = input[offset + i + 1]; // U (shared between pixels)
+            tmprowbuf[j + 2] = input[offset + i + 3]; // V (shared between pixels)
+            tmprowbuf[j + 3] = input[offset + i + 2]; // Y (unique to this pixel)
+            tmprowbuf[j + 4] = input[offset + i + 1]; // U (shared between pixels)
+            tmprowbuf[j + 5] = input[offset + i + 3]; // V (shared between pixels)
+        }
+        jpeg_write_scanlines(&cinfo, row_pointer, 1);
+    }
+
+    jpeg_finish_compress(&cinfo);
+    jpeg_destroy_compress(&cinfo);
+
+    std::cout << "libjpeg produced " << outlen << " bytes" << endl;
+
+    output = vector<uint8_t>(outbuffer, outbuffer + outlen);
 }

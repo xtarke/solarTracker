@@ -8,6 +8,8 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
+#include <vector>
+
 class Camera {
 
 private:
@@ -19,6 +21,9 @@ private:
 	int init_mmap(int fd);
 	int capture_image(int fd);
 	void jpegWrite(unsigned char* img, char* jpegFilename);
+
+
+	void compressYUYVtoJPEG(uint8_t *input, const int width, const int height, std::vector<uint8_t>& output);
 
 	struct buffer {
 		void *start;
