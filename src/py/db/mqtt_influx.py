@@ -23,7 +23,7 @@ def on_message(client, userdata, message):
  
     # print("%s %s" % (message.topic, message.payload))    
 
-    if (message.topic == 'camera2/temperatura'):    
+    if (message.topic == 'camera1/temperatura'):    
         temperature = str(float(message.payload))
         # print(temperature)
 
@@ -85,8 +85,8 @@ def main():
     mqttc.on_message = on_message
     mqttc.on_connect = on_connect
 
-    mqttc.subscribe("camera2/temperatura")
-    logging.info('Subscribing to: ' + 'camera2/temperatura')
+    mqttc.subscribe("camera1/temperatura")
+    logging.info('Subscribing to: ' + 'camera1/temperatura')
 
     mqttc.subscribe("solar/ze")
     logging.info('Subscribing to: ' + 'solar/ze')
@@ -113,16 +113,16 @@ def main():
 
             # Record solar position between 6 and 20
             if ((now > datetime.time(6,0,0)) & (now < datetime.time(20,0,0))):
-                json_body[0]['measurement'] = 'azimuth'
-                json_body[0]['fields']['Float_value'] = float(az)
-                client.write_points(json_body)
+            	json_body[0]['measurement'] = 'azimuth'
+            	json_body[0]['fields']['Float_value'] = float(az)
+            	client.write_points(json_body)
 
-                json_body[0]['measurement'] = 'zenith'
-                json_body[0]['fields']['Float_value'] = float(ze)
-                client.write_points(json_body)
+            	json_body[0]['measurement'] = 'zenith'
+            	json_body[0]['fields']['Float_value'] = float(ze)
+            	client.write_points(json_body)
 
            # scp pi@150.162.29.74:/home/pi/my_image.jpg /usr/share/grafana/public/img/my_image.jpg
-            subprocess.run(['scp', 'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image.jpg'])
+            subprocess.run(['scp', '-P', '9000', 'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image.jpg'])
             # subprocess.run(['scp', '-P', ' 9000' ,'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image2.jpg'])
                
     except KeyboardInterrupt:
@@ -133,4 +133,5 @@ def main():
             
 if __name__ == '__main__':
     main()
+
 
