@@ -9,7 +9,7 @@ import logging
 import argparse
 
 # logFilename = '/home/xtarke/pi_mon-' + time.strftime('%Y%m%d-%H-%M-%S') + '.log'
-logFilename = '/home/pi/pi_mon.log'
+logFilename = './pi_mon.log'
 logging.basicConfig(filename=logFilename,level=logging.DEBUG)
 
 cameraOn = True
@@ -35,8 +35,7 @@ class PeriodicTimer(object):
     def measure_temp(self):
         temp = os.popen("vcgencmd measure_temp").readline()
         return (temp.replace("temp=","")).replace("'C","")
-        #return 'oi'
-
+    
     def cancel(self):
         self.thread.cancel()
         
@@ -79,7 +78,7 @@ def main():
     parser.add_argument('user', help='Broker user')
     parser.add_argument('password', help='Broker password')
     
-    options = parser.parse_args();
+    options = parser.parse_args()
     
     print('Connecting to {} with user {}.'.format(options.broker, options.user))
     logging.info('Connecting to {} with user {}.'.format(options.broker, options.user))
@@ -115,7 +114,7 @@ def main():
             if (cameraOn == True):
 
                 # os.popen("fswebcam --quiet -D1--jpeg 100 --set brightness=70% --set contrast=90% --set Saturation=1 -r 640x480 my_image.jpg")
-                #os.popen("fswebcam --quiet -D1--jpeg 100 --set brightness=70% --set contrast=90% --set Saturation=1 my_image.jpg")
+                # os.popen("fswebcam --quiet -D1--jpeg 100 --set brightness=70% --set contrast=90% --set Saturation=1 my_image.jpg")
                 os.popen('./v4l2grab.bin -o my_image.jpg')
                 
                 #if (camera.closed == True):
@@ -132,12 +131,9 @@ def main():
                 # my_file.close()
                 imageFile = open("./my_image.jpg", "rb")
 
-                # print('oi')
-
                 try:                
                     data = imageFile.read()
-                    mqttc.publish("camera2/image",data)
-                    # print('caca')                 
+                    mqttc.publish("camera2/image",data)            
             
                 finally:
                     imageFile.close()
@@ -150,11 +146,11 @@ def main():
                         print(lapseFilename)
                         sleepCounter = 0
                     
-            else:
-                camera.close()
+            #else:
+                #camera.close()
                     
-            # print('hello')
-            mqttc.publish("camera2/temperatura", temperature)
+            print('hello')
+            # mqttc.publish("camera2/temperatura", temperature)
 
             time.sleep(3)
             sleepCounter = sleepCounter + 1
@@ -162,8 +158,6 @@ def main():
     except KeyboardInterrupt:
         print('Ending...')
         mqttc.disconnect()
-
-        # camera.close()
 
         temperatureTimer.cancel()
         
