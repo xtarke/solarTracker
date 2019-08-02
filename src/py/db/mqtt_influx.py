@@ -7,6 +7,7 @@ import datetime
 import logging
 import argparse
 import subprocess
+import os
 
 
 logFilename = '/home/starke/influxLight-' + time.strftime('%Y%m%d-%H-%M-%S') + '.log'
@@ -20,8 +21,26 @@ def on_message(client, userdata, message):
     global temperature
     global az
     global ze
- 
-    # print("%s %s" % (message.topic, message.payload))    
+
+    if (message.topic == 'camera1/image'):    
+        # print('Image received!')
+        newFile = open('/usr/share/grafana/public/img/my_image.jpg', "wb")
+        newFile.write(message.payload)
+        newFile.close()
+
+        # Make timelapse
+        now = datetime.datetime.now().time()
+        if ((now > datetime.time(6,0,0)) & (now < datetime.time(20,0,0))):
+            folderName = '/home/starke/Pictures/' + time.strftime("%Y%m%d")            
+            newFileName = folderName + '/' + time.strftime("%H%M%S") + '.jpg'
+
+            # print(folderName)
+            # print(newFileName)
+            createFolder(folderName)
+            
+            newFile = open(newFileName, "wb")
+            newFile.write(message.payload)
+            newFile.close()        
 
     if (message.topic == 'camera1/temperatura'):    
         temperature = str(float(message.payload))
@@ -47,6 +66,13 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         print('Unexpected disconnection: ' + str(rc))
         logging.warning('Unexpected disconnection: ' + str(rc))
+
+def createFolder(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print ('Error: Creating directory. ' + directory)
             
 def main():
     json_body = [
@@ -94,6 +120,9 @@ def main():
     mqttc.subscribe("solar/az")
     logging.info('Subscribing to: ' + 'solar/az')
 
+    mqttc.subscribe("camera1/image")
+    logging.info('Subscribing to: ' + 'camera1/image')
+
     #client = InfluxDBClient('localhost', 8086, options.DBuser, options.DBpassword)
     client = InfluxDBClient('localhost', 8086)
     client.switch_database('solartracker')
@@ -104,9 +133,8 @@ def main():
             time.sleep(30)
             json_body[0]['measurement'] = 'camera_temp'
             json_body[0]['fields']['Float_value'] = float(temperature)
-            # json_body[0]['time'] = time.strftime('%Y-%m-%dT%H:%M:%S') + str(timezoneinfo) + ':00'
-            
-            print(json_body)
+            # json_body[0]['time'] = time.strftime('%Y-%m-%dT%H:%M:%S') + str(timezoneinfo) + ':00'            
+            # print(json_body)
             client.write_points(json_body)
 
             now = datetime.datetime.now().time()
@@ -121,8 +149,7 @@ def main():
             	json_body[0]['fields']['Float_value'] = float(ze)
             	client.write_points(json_body)
 
-           # scp pi@150.162.29.74:/home/pi/my_image.jpg /usr/share/grafana/public/img/my_image.jpg
-            subprocess.run(['scp', '-P', '9000', 'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image.jpg'])
+            # subprocess.run(['scp', '-P', '9000', 'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image.jpg'])
             # subprocess.run(['scp', '-P', ' 9000' ,'pi@150.162.29.74:/home/pi/my_image.jpg', '/usr/share/grafana/public/img/my_image2.jpg'])
                
     except KeyboardInterrupt:

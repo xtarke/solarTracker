@@ -1,9 +1,9 @@
 #!/bin/sh
 
-scp ./solarTracker  debian@192.168.25.62:/home/debian/solar/
-#scp ./pulses.bin  debian@192.168.6.2:/home/debian/solar/
-#scp ./src/*.cpp alarm@192.168.7.2:/home/alarm/solar/src/
-#scp ./src/*.h alarm@192.168.7.2:/home/alarm/solar/src/
-#scp ./src/spa/*.h alarm@192.168.7.2:/home/alarm/solar/src/spa/
-#scp ./src/spa/*.c alarm@192.168.7.2:/home/alarm/solar/src/spa/
-#scp ./src/pru/*.p debian@192.168.6.2:/home/debian/solar/
+scp ./solarTracker  user@192.168.25.62:/home/user/solar/
+#scp ./pulses.bin  user@192.168.6.2:/home/user/solar/
+#scp ./src/*.cpp user@192.168.7.2:/home/user/solar/src/
+#scp ./src/*.h user@192.168.7.2:/home/user/solar/src/
+#scp ./src/spa/*.h user@192.168.7.2:/home/user/solar/src/spa/
+#scp ./src/spa/*.c user@192.168.7.2:/home/user/solar/src/spa/
+#scp ./src/pru/*.p user@192.168.6.2:/home/user/solar/
