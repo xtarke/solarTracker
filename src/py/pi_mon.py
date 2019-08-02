@@ -58,13 +58,13 @@ def on_message_print(client, userdata, message):
     logging.info('Connecting to {} with user {}.'.format(message.topic, message.payload))
     print("%s %s" % (message.topic, message.payload))    
 
-    if (message.topic == 'camera2/on'):    
+    if (message.topic == 'camera1/on'):    
         if (message.payload == b'1'):        
             cameraOn = True        
         else:
             cameraOn = False
 
-    if (message.topic == 'camera2/lapse'):
+    if (message.topic == 'camera1/lapse'):
         if (message.payload == b'1'):        
             cameraOn = True
             timelapseOn = True        
@@ -89,55 +89,51 @@ def main():
     mqttc.loop_start()
     mqttc.on_disconnect = on_disconnect
     mqttc.on_message = on_message_print
-    # mqttc.user_data_set(userdata)
 
-    mqttc.subscribe("camera2/on")
-    mqttc.subscribe("camera2/lapse")
+    mqttc.subscribe("camera1/on")
+    mqttc.subscribe("camera1/lapse")
 
     temperatureTimer = PeriodicTimer(1, mqttc)
     temperatureTimer.start()
 
-    camera = PiCamera()
-    camera.rotation = 0
-    camera.iso = 500
-    camera.start_preview()
+    #camera = PiCamera()
+    #camera.rotation = 270
+    #camera.iso = 500
+    # camera.start_preview()
 
-    time.sleep(2)
+    # time.sleep(2)
     #stream = BytesIO()
     createFolder('timelapse')
 
     sleepCounter = 0
-    
+
     try:
         while True:
 
             if (cameraOn == True):
+                #if (camera.closed == True):
+                camera = PiCamera()
+                camera.rotation = 270
+                camera.iso = 500
+                #    camera.start_preview()
+                time.sleep(2)
 
-                if (camera.closed == True):
-                    camera = PiCamera()
-                    camera.rotation = 0
-                    camera.iso = 500
-                    camera.start_preview()
-                    time.sleep(2)
-                
                 camera.annotate_text = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                my_file = open('/home/pi/my_image.jpg', 'wb')                
-                camera.capture(my_file)           
+                my_file = open('/home/pi/my_image.jpg', 'wb')
+                camera.capture(my_file)
+                my_file.close()
+                camera.close()
+                
+                imageFile = open("/home/pi/my_image.jpg", "rb")
 
-                # my_file.close()
-                # imageFile = open("/home/pi/my_image.jpg", "rb")
+                try:
+                    data = imageFile.read()
+                    mqttc.publish("camera1/image",data)
+                    # print('caca')
+                finally:
+                    imageFile.close()
 
-                # print('oi')
-
-                #try:                
-                #    data = imageFile.read()
-                #    mqttc.publish("camera2/image",data)
-                    # print('caca')                 
-            
-                #finally:
-                #    imageFile.close()
-
-                if (sleepCounter > 10):
+                if (sleepCounter == 10):
                     print('camera');
                     if (timelapseOn == True):                
                         lapseFilename = '/home/pi/timelapse/img_' + time.strftime("%Y%m%d-%H%M%S") + '.jpg'
@@ -145,13 +141,13 @@ def main():
                         print(lapseFilename)
                         sleepCounter = 0
                     
-            else:
-                camera.close()
+            # else:
+            #    camera.close()
                     
             # print('hello')
-            mqttc.publish("camera2/temperatura", temperature)
+            mqttc.publish("camera1/temperatura", temperature)
 
-            time.sleep(3)
+            time.sleep(30)
             sleepCounter = sleepCounter + 1
 
     except KeyboardInterrupt:
