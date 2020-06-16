@@ -1,0 +1,15 @@
+[Unit]
+Description=Temperatures ESP8266 MQTT to influx gateway.
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 -u /home/lalalalal/influx_temp.py
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=starke
+
+[Install]
+WantedBy=multi-user.target
+ 
