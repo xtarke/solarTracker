@@ -1,7 +1,7 @@
 # solarTracker
 
-This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not include in the repository). User interface uses MQQT publish/subscribe.
-    
+This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not include in the repository). User interface uses MQTT publish/subscribe.
+
 ### Prerequisites
 
 - A BeagleBone black running Debian 9.3.
@@ -10,16 +10,16 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
 - Mosquitto broker running in BeagleBone
 - A serial GPS with NMEA string format
 - A solar tracker with two stepper motors: Azimuth and Zenith
-    
-### MQQT USer interface commands:
+
+### MQTT USer interface commands:
 
 - Commands (to publish):
     - "solar/cmd": changes application mode
         - "0" -> Solar tracker activated
         - "1" -> Manual
         - "2" -> Turn off system. Azimuth and Zenith axis go to "home position"
-        - "3" -> Calibration mode. 
-        
+        - "3" -> Calibration mode.
+
 
     - "solar/cmd/azrepos": reposition of Azimuth axis in pulses. Hardware max/min angles are proteced
         - Value lower than zero rotates clockwise
@@ -30,12 +30,12 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
         - Value lower than zero rotates clockwise
         - Value higher than zero rotates counterclowise
         - Only works in Manual mode
-        
+
     - "solar/cmd/zesethome": Move Zenith axis (pulses). NO HARDWARE PROTECTION.
         - Value lower than zero rotates clockwise
         - Value higher than zero rotates counterclowise
         - Only works in Manual mode
-    
+
     - "solar/cmd/azsethome": Move Azimuth axis (pulses). NO HARDWARE PROTECTION.
         - Value lower than zero rotates clockwise
         - Value higher than zero rotates counterclowise
@@ -54,7 +54,7 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
     - "solar/sunset": SPA sunset time
 
 ### Hardware notes
-    
+
 - BeagleBone pins: (ALL 3V3. Use correct voltage drivers)
 
     - I2C Interface for Magnetometer, termometer and barometer
@@ -63,7 +63,7 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
     - Serial (UART) for NMEA GPS
         - P9.24 (TX) -> GPS (RX)
         - P9.26 (RX) -> GPS (TX)
-        
+
     - Stepper interface: Internal Sitara PRU
         - P9.27 (PRU) -> Pulses to azimuth driver
         - P9.28 (PRU) -> Pulses to zenith driver
@@ -81,7 +81,7 @@ This application tracks the sun using NREL's Solar Position Algorithm (SPA) (not
         - additional custom capes
             - uboot_overlay_addr4=/lib/firmware/BB-UART1-00A0.dtbo
             - uboot_overlay_addr5=/lib/firmware/EBB-PRU-xtarke-00A0.dtbo
-    
+
 ### Links:
     - https://github.com/beagleboard/bb.org-overlays/
     - https://github.com/cdsteinkuehler/beaglebone-universal-io
