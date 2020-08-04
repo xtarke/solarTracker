@@ -9,7 +9,7 @@ import logging
 import argparse
 
 # logFilename = '/home/xtarke/pi_mon-' + time.strftime('%Y%m%d-%H-%M-%S') + '.log'
-logFilename = './pi_mon.log'
+logFilename = '/home/pi/pi_mon.log'
 logging.basicConfig(filename=logFilename,level=logging.DEBUG)
 
 cameraOn = True
@@ -17,25 +17,24 @@ timelapseOn = False
 temperature = 0
 
 class PeriodicTimer(object):
-    def __init__(self, interval, mqttClient):
+    def __init__(self, interval):
         self.interval = interval
-        self.mqtt = mqttClient
 
-    def foo(self):
+    def get_temp(self):
         global temperature
         
         temperature = self.measure_temp()
-        self.thread = threading.Timer(self.interval, self.foo)
+        self.thread = threading.Timer(self.interval, self.get_temp)
         self.thread.start()
 
     def start(self):
-        self.thread = threading.Timer(self.interval, self.foo)
+        self.thread = threading.Timer(self.interval, self.get_temp)
         self.thread.start()
 
     def measure_temp(self):
         temp = os.popen("vcgencmd measure_temp").readline()
         return (temp.replace("temp=","")).replace("'C","")
-    
+
     def cancel(self):
         self.thread.cancel()
         
@@ -44,13 +43,6 @@ def on_disconnect(client, userdata, rc):
         print('Unexpected disconnection: ' + str(rc))
         logging.warning('Unexpected disconnection: ' + str(rc))
         
-def createFolder(directory):
-    try:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    except OSError:
-        print ('Error: Creating directory. ' + directory)
-
 def on_message_print(client, userdata, message):
     global cameraOn
     global timelapseOn
@@ -78,7 +70,7 @@ def main():
     parser.add_argument('user', help='Broker user')
     parser.add_argument('password', help='Broker password')
     
-    options = parser.parse_args()
+    options = parser.parse_args();
     
     print('Connecting to {} with user {}.'.format(options.broker, options.user))
     logging.info('Connecting to {} with user {}.'.format(options.broker, options.user))
@@ -94,74 +86,33 @@ def main():
     mqttc.subscribe("camera2/on")
     mqttc.subscribe("camera2/lapse")
 
-    temperatureTimer = PeriodicTimer(1, mqttc)
+    temperatureTimer = PeriodicTimer(10)
     temperatureTimer.start()
-
-    # camera = PiCamera()
-    # camera.rotation = 0
-    # camera.iso = 500
-    # camera.start_preview()
-
-    time.sleep(2)
-    #stream = BytesIO()
-    createFolder('timelapse')
-
-    sleepCounter = 0
-    
+        
     try:
         while True:
-
-            if (cameraOn == True):
-
-                # os.popen("fswebcam --quiet -D1--jpeg 100 --set brightness=70% --set contrast=90% --set Saturation=1 -r 640x480 my_image.jpg")
-                # os.popen("fswebcam --quiet -D1--jpeg 100 --set brightness=70% --set contrast=90% --set Saturation=1 my_image.jpg")
-                os.popen('./v4l2grab.bin -o my_image.jpg')
-                
-                #if (camera.closed == True):
-                #    camera = PiCamera()
-                #    camera.rotation = 0
-                #    camera.iso = 500
-                #    camera.start_preview()
-                #    time.sleep(2)
-                
-                #camera.annotate_text = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                #my_file = open('/home/pi/my_image.jpg', 'wb')                
-                #camera.capture(my_file)           
-
-                # my_file.close()
-                imageFile = open("./my_image.jpg", "rb")
-
-                try:                
-                    data = imageFile.read()
-                    mqttc.publish("camera2/image",data)            
+            #os.popen("fswebcam --quiet -D1--jpeg 100 --set brightness=70% --set contrast=90% --set Saturation=1 -r 640x480 my_image.jpg")
+            #os.popen("fswebcam --quiet -D1--jpeg 100 --set brightness=70% --set contrast=90% --set Saturation=1 my_image.jpg")
+            #os.popen('./v4l2grab.bin -o my_image.jpg')
+            os.popen('fswebcam  --quiet --jpeg 100 --resolution 720x480 my_image.jpg')
             
-                finally:
-                    imageFile.close()
+            imageFile = open("./my_image.jpg", "rb")
 
-                if (sleepCounter > 10):
-                    # print('camera');
-                    if (timelapseOn == True):                
-                        lapseFilename = '/home/pi/timelapse/img_' + time.strftime("%Y%m%d-%H%M%S") + '.jpg'
-                        os.rename('/home/pi/my_image.jpg', lapseFilename)
-                        print(lapseFilename)
-                        sleepCounter = 0
-                    
-            #else:
-                #camera.close()
-                    
-            print('hello')
-            # mqttc.publish("camera2/temperatura", temperature)
+            try:                
+                data = imageFile.read()
+                mqttc.publish("camera2/image",data)                   
+        
+            finally:
+                imageFile.close()
+           
+            mqttc.publish("camera2/temperatura", temperature)
 
-            time.sleep(3)
-            sleepCounter = sleepCounter + 1
+            time.sleep(60)
 
     except KeyboardInterrupt:
         print('Ending...')
         mqttc.disconnect()
-
         temperatureTimer.cancel()
         
-        
-
 if __name__ == '__main__':
     main()
